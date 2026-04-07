@@ -7,7 +7,9 @@
 //! - 安全策略与路径验证
 
 pub mod ask_tool;
+pub mod ast_tool;
 pub mod bash_tool;
+pub mod browser_tool;
 pub mod calc_tool;
 pub mod edit_tool;
 pub mod fetch_tool;
@@ -15,6 +17,8 @@ pub mod file_tools;
 pub mod find_tool;
 pub mod grep_tool;
 pub mod lsp_tool;
+pub mod notebook_tool;
+pub mod python_tool;
 pub mod registry;
 pub mod security;
 pub mod ssh_tool;
@@ -31,7 +35,9 @@ use std::fmt;
 // ============================================================
 
 pub use ask_tool::{AskResponse, AskTool, Choice, Question};
+pub use ast_tool::{AstEditRequest, AstMatch, AstSearchRequest, AstTool};
 pub use bash_tool::BashTool;
+pub use browser_tool::{BrowserAction, BrowserResult, BrowserTool};
 pub use calc_tool::CalcTool;
 pub use edit_tool::{EditOperation, EditTool};
 pub use fetch_tool::FetchTool;
@@ -41,6 +47,10 @@ pub use file_tools::{
 pub use find_tool::FindTool;
 pub use grep_tool::GrepTool;
 pub use lsp_tool::{LspRequest, LspResponse, LspResultItem, LspTool};
+pub use notebook_tool::{
+    CellOutput, CellType, Notebook, NotebookCell, NotebookMetadata, NotebookTool, OutputType,
+};
+pub use python_tool::{PythonMode, PythonResult, PythonTool};
 pub use registry::{create_default_registry, ToolRegistry};
 pub use security::{FileOperationGuard, PathValidator, SecurityPolicy};
 pub use ssh_tool::{SshAuth, SshConnection, SshResult, SshTool};

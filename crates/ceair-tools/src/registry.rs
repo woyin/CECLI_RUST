@@ -3,7 +3,9 @@
 //! 提供线程安全的工具注册表 `ToolRegistry`，用于动态注册、查找和管理工具。
 //! 使用 `DashMap` 实现高性能的并发读写访问。
 
+use crate::ast_tool::AstTool;
 use crate::bash_tool::BashTool;
+use crate::browser_tool::BrowserTool;
 use crate::calc_tool::CalcTool;
 use crate::edit_tool::EditTool;
 use crate::file_tools::{
@@ -12,6 +14,8 @@ use crate::file_tools::{
 use crate::find_tool::FindTool;
 use crate::grep_tool::GrepTool;
 use crate::lsp_tool::LspTool;
+use crate::notebook_tool::NotebookTool;
+use crate::python_tool::PythonTool;
 use crate::ssh_tool::SshTool;
 use crate::task_tool::TaskTool;
 use crate::{Tool, ToolError, ToolResult};
@@ -195,6 +199,10 @@ impl Default for ToolRegistry {
 /// - `lsp`: 语言服务器协议集成
 /// - `calc`: 数学表达式求值
 /// - `task`: 任务代理委派
+/// - `python`: Python 代码执行
+/// - `notebook`: Jupyter Notebook 操作
+/// - `browser`: 浏览器自动化
+/// - `ast_grep`: 基于语法树的代码搜索和编辑
 pub fn create_default_registry() -> ToolRegistry {
     let registry = ToolRegistry::new();
 
@@ -215,6 +223,10 @@ pub fn create_default_registry() -> ToolRegistry {
     registry.register(Arc::new(LspTool));
     registry.register(Arc::new(CalcTool));
     registry.register(Arc::new(TaskTool));
+    registry.register(Arc::new(PythonTool::new()));
+    registry.register(Arc::new(NotebookTool));
+    registry.register(Arc::new(BrowserTool::new()));
+    registry.register(Arc::new(AstTool));
 
     info!("默认工具注册表已创建，共 {} 个工具", registry.len());
 
@@ -384,7 +396,7 @@ mod tests {
         let registry = create_default_registry();
 
         // 验证所有内置工具已注册
-        assert_eq!(registry.len(), 14);
+        assert_eq!(registry.len(), 18);
 
         // 验证每个内置工具都存在
         let expected_tools = vec![
@@ -402,6 +414,10 @@ mod tests {
             "lsp",
             "calc",
             "task",
+            "python",
+            "notebook",
+            "browser",
+            "ast_grep",
         ];
 
         for tool_name in expected_tools {
@@ -420,7 +436,7 @@ mod tests {
         let schemas = registry.get_schemas();
 
         let arr = schemas.as_array().unwrap();
-        assert_eq!(arr.len(), 14);
+        assert_eq!(arr.len(), 18);
 
         // 验证每个 Schema 都包含必要字段
         for schema in arr {

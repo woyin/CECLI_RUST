@@ -195,6 +195,7 @@ dependencies = [
  "tokio",
  "tokio-test",
  "tokio-util",
+ "toml",
  "tracing",
  "uuid",
 ]

@@ -22,6 +22,9 @@
 //! let config = AgentLoopConfig::default();
 //! ```
 
+/// 代理统一配置模块
+pub mod agent_config;
+
 /// 代理主事件循环模块
 pub mod agent_loop;
 
@@ -51,6 +54,9 @@ pub mod ttsr;
 
 /// 记忆系统模块
 pub mod memory;
+
+/// 代理管道模块
+pub mod pipeline;
 
 // ---------------------------------------------------------------------------
 // 公共重导出 - 便于外部直接引用核心类型

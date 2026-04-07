@@ -11,5 +11,8 @@ pub mod launch;
 /// 配置命令 - 查看和管理配置
 pub mod config;
 
+/// 初始化命令 - 初始化项目 CEAIR 配置
+pub mod init;
+
 /// 状态命令 - 显示系统运行状态
 pub mod status;
