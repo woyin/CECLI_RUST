@@ -22,7 +22,9 @@ async-trait = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 futures = { workspace = true }
+regex = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
 mockall = { workspace = true }
+tempfile = { workspace = true }

@@ -186,9 +186,11 @@ dependencies = [
  "chrono",
  "futures",
  "mockall",
+ "regex",
  "ring",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror",
  "tokio",
  "tokio-test",
@@ -362,6 +364,7 @@ dependencies = [
  "tokio-test",
  "tracing",
  "url",
+ "uuid",
  "walkdir",
 ]
 

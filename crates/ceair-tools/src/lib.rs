@@ -8,12 +8,17 @@
 
 pub mod ask_tool;
 pub mod bash_tool;
+pub mod calc_tool;
+pub mod edit_tool;
 pub mod fetch_tool;
 pub mod file_tools;
 pub mod find_tool;
 pub mod grep_tool;
+pub mod lsp_tool;
 pub mod registry;
 pub mod security;
+pub mod ssh_tool;
+pub mod task_tool;
 pub mod todo_tool;
 pub mod web_search_tool;
 
@@ -27,14 +32,19 @@ use std::fmt;
 
 pub use ask_tool::{AskResponse, AskTool, Choice, Question};
 pub use bash_tool::BashTool;
+pub use calc_tool::CalcTool;
+pub use edit_tool::{EditOperation, EditTool};
 pub use fetch_tool::FetchTool;
 pub use file_tools::{
     DeleteFileTool, EditFileTool, ListDirectoryTool, ReadFileTool, SearchFilesTool, WriteFileTool,
 };
 pub use find_tool::FindTool;
 pub use grep_tool::GrepTool;
+pub use lsp_tool::{LspRequest, LspResponse, LspResultItem, LspTool};
 pub use registry::{create_default_registry, ToolRegistry};
 pub use security::{FileOperationGuard, PathValidator, SecurityPolicy};
+pub use ssh_tool::{SshAuth, SshConnection, SshResult, SshTool};
+pub use task_tool::{TaskRequest, TaskResult, TaskState, TaskTool};
 pub use todo_tool::{Phase, TaskStatus, TodoState, TodoTask, TodoTool};
 pub use web_search_tool::{SearchProvider, SearchResult, WebSearchTool};
 

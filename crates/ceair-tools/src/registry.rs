@@ -4,11 +4,16 @@
 //! 使用 `DashMap` 实现高性能的并发读写访问。
 
 use crate::bash_tool::BashTool;
+use crate::calc_tool::CalcTool;
+use crate::edit_tool::EditTool;
 use crate::file_tools::{
     DeleteFileTool, EditFileTool, ListDirectoryTool, ReadFileTool, SearchFilesTool, WriteFileTool,
 };
 use crate::find_tool::FindTool;
 use crate::grep_tool::GrepTool;
+use crate::lsp_tool::LspTool;
+use crate::ssh_tool::SshTool;
+use crate::task_tool::TaskTool;
 use crate::{Tool, ToolError, ToolResult};
 use dashmap::DashMap;
 use serde_json::{json, Value};
@@ -173,30 +178,43 @@ impl Default for ToolRegistry {
 // 默认注册表工厂函数
 // ============================================================
 
-/// 创建包含所有内置文件工具的默认注册表
+/// 创建包含所有内置工具的默认注册表
 ///
 /// 注册以下工具：
 /// - `read_file`: 读取文件内容
 /// - `write_file`: 写入文件内容
 /// - `edit_file`: 编辑文件（搜索替换）
+/// - `edit`: 精确文件内容替换
 /// - `list_directory`: 列出目录内容
 /// - `search_files`: 搜索文件
 /// - `delete_file`: 删除文件
+/// - `bash`: 执行 shell 命令
+/// - `grep`: 文本搜索
+/// - `find`: 文件查找
+/// - `ssh`: 远程命令执行
+/// - `lsp`: 语言服务器协议集成
+/// - `calc`: 数学表达式求值
+/// - `task`: 任务代理委派
 pub fn create_default_registry() -> ToolRegistry {
     let registry = ToolRegistry::new();
 
-    // 注册所有内置文件操作工具
+    // 注册所有内置工具
     info!("正在创建默认工具注册表...");
 
     registry.register(Arc::new(ReadFileTool));
     registry.register(Arc::new(WriteFileTool));
     registry.register(Arc::new(EditFileTool));
+    registry.register(Arc::new(EditTool));
     registry.register(Arc::new(ListDirectoryTool));
     registry.register(Arc::new(SearchFilesTool));
     registry.register(Arc::new(DeleteFileTool));
     registry.register(Arc::new(BashTool::new()));
     registry.register(Arc::new(GrepTool::new()));
     registry.register(Arc::new(FindTool::new()));
+    registry.register(Arc::new(SshTool));
+    registry.register(Arc::new(LspTool));
+    registry.register(Arc::new(CalcTool));
+    registry.register(Arc::new(TaskTool));
 
     info!("默认工具注册表已创建，共 {} 个工具", registry.len());
 
@@ -366,19 +384,24 @@ mod tests {
         let registry = create_default_registry();
 
         // 验证所有内置工具已注册
-        assert_eq!(registry.len(), 9);
+        assert_eq!(registry.len(), 14);
 
         // 验证每个内置工具都存在
         let expected_tools = vec![
             "read_file",
             "write_file",
             "edit_file",
+            "edit",
             "list_directory",
             "search_files",
             "delete_file",
             "bash",
             "grep",
             "find",
+            "ssh",
+            "lsp",
+            "calc",
+            "task",
         ];
 
         for tool_name in expected_tools {
@@ -397,7 +420,7 @@ mod tests {
         let schemas = registry.get_schemas();
 
         let arr = schemas.as_array().unwrap();
-        assert_eq!(arr.len(), 9);
+        assert_eq!(arr.len(), 14);
 
         // 验证每个 Schema 都包含必要字段
         for schema in arr {
