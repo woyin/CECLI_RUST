@@ -4,6 +4,8 @@
 //!
 //! ## 支持的提供者
 //!
+//! - **OpenAI**: OpenAI 兼容 API（GPT-4、GPT-4o、Ollama、LM Studio、vLLM 等）
+//! - **Anthropic**: Claude 系列模型（Sonnet 4、Opus 4、Haiku）
 //! - **DeepSeek**: 深度求索大模型
 //! - **Qianwen (通义千问)**: 阿里云通义千问大模型
 //! - **Wenxin (文心一言)**: 百度文心一言大模型
@@ -24,12 +26,16 @@ pub mod stream;
 /// 各 AI 服务商的具体实现
 pub mod providers;
 
+/// 模型角色路由
+pub mod model_roles;
+
 // 重新导出核心类型，方便外部使用
 pub use provider::{
     AiProvider, AiResponse, ChatMessage, ChatOptions, MessageRole, ProviderConfig,
     ProviderFactory, StreamEvent, TokenUsage, ToolCall, ToolDefinition, ToolParameter,
 };
 pub use stream::{SseParser, StreamAggregator};
+pub use model_roles::{ModelConfig, ModelRole, ModelRoleRouter, ThinkingLevel};
 
 /// AI 模块专用错误类型
 #[derive(Debug, thiserror::Error)]

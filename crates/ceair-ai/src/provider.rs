@@ -364,6 +364,8 @@ impl ProviderFactory {
     /// 根据提供者名称和配置创建 AI 提供者实例
     ///
     /// # 支持的提供者名称
+    /// - `"openai"` — OpenAI 兼容 API（支持 OpenAI、Ollama、LM Studio、vLLM 等）
+    /// - `"anthropic"` / `"claude"` — Anthropic Messages API
     /// - `"deepseek"` — DeepSeek 深度求索
     /// - `"qianwen"` / `"tongyi"` — 通义千问
     /// - `"wenxin"` / `"ernie"` — 文心一言
@@ -375,6 +377,12 @@ impl ProviderFactory {
         config: ProviderConfig,
     ) -> AiResult<Box<dyn AiProvider>> {
         match name.to_lowercase().as_str() {
+            "openai" => Ok(Box::new(
+                crate::providers::openai::OpenAiProvider::new(config),
+            )),
+            "anthropic" | "claude" => Ok(Box::new(
+                crate::providers::anthropic::AnthropicProvider::new(config),
+            )),
             "deepseek" => Ok(Box::new(
                 crate::providers::deepseek::DeepSeekProvider::new(config),
             )),
@@ -482,7 +490,8 @@ mod tests {
     fn test_provider_factory_valid_names() {
         // 验证所有支持的提供者名称都能成功创建实例
         let names = vec![
-            "deepseek", "qianwen", "tongyi", "dashscope", "wenxin", "ernie", "baidu",
+            "openai", "anthropic", "claude", "deepseek", "qianwen", "tongyi", "dashscope",
+            "wenxin", "ernie", "baidu",
         ];
 
         for name in names {
