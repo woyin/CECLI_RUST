@@ -19,7 +19,15 @@ pub mod input;
 /// 状态栏组件 - 渲染底部状态信息栏
 pub mod status;
 
+/// 增强型状态栏组件 - 支持详细 token 用量和费用显示
+pub mod status_bar;
+
+/// 会话选择器组件 - 历史会话列表和选择
+pub mod session_selector;
+
 // 便捷的重导出
 pub use input::InputView;
 pub use session::SessionView;
+pub use session_selector::SessionSelector;
 pub use status::StatusBar;
+pub use status_bar::EnhancedStatusBar;

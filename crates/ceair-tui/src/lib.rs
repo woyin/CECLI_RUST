@@ -24,6 +24,9 @@ pub mod app;
 /// Markdown 渲染模块 - 将 Markdown 文本转换为带样式的终端文本
 pub mod markdown;
 
+/// 主题系统模块 - 颜色主题、颜色模式检测和颜色降级
+pub mod theme;
+
 /// UI 组件模块 - 会话视图、输入框、状态栏等界面组件
 pub mod components;
 
@@ -36,3 +39,6 @@ pub use app::{App, AppAction, AppMode, DisplayMessage, InputState, StatusInfo};
 
 /// 重导出 Markdown 渲染器
 pub use markdown::MarkdownRenderer;
+
+/// 重导出主题系统类型
+pub use theme::{ColorMode, Theme, ThemeColors, ThemeVariant};
