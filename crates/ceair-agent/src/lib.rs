@@ -28,6 +28,12 @@ pub mod agent_config;
 /// 代理主事件循环模块
 pub mod agent_loop;
 
+/// 专业 Agent 定义模块（11 个内置 Agent）
+pub mod agents;
+
+/// 类别路由模块（意图驱动的模型选择）
+pub mod category;
+
 /// 上下文压缩模块
 pub mod compaction;
 
@@ -42,6 +48,9 @@ pub mod hashline;
 
 /// 钩子系统模块
 pub mod hooks;
+
+/// 意图门控模块（请求意图分类）
+pub mod intent_gate;
 
 /// 技能系统模块
 pub mod skills;

@@ -29,6 +29,9 @@ pub mod providers;
 /// 模型角色路由
 pub mod model_roles;
 
+/// 模型回退链模块
+pub mod fallback;
+
 // 重新导出核心类型，方便外部使用
 pub use provider::{
     AiProvider, AiResponse, ChatMessage, ChatOptions, MessageRole, ProviderConfig,
