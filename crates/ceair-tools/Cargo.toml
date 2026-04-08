@@ -22,7 +22,8 @@ walkdir = { workspace = true }
 reqwest = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true }
-
+chrono = { workspace = true }
+parking_lot = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio-test = "0.4"

@@ -40,6 +40,7 @@ dashmap = "5.5"
 parking_lot = "0.12"
 sled = "0.34"
 ring = "0.17"
+base64 = "0.22"
 ratatui = "0.24"
 crossterm = "0.27"
 chrono = { version = "0.4", features = ["serde"] }

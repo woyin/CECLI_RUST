@@ -18,6 +18,7 @@ pub mod find_tool;
 pub mod grep_tool;
 pub mod lsp_tool;
 pub mod notebook_tool;
+pub mod permissions;
 pub mod python_tool;
 pub mod registry;
 pub mod security;
@@ -25,6 +26,8 @@ pub mod ssh_tool;
 pub mod task_tool;
 pub mod todo_tool;
 pub mod web_search_tool;
+pub mod session_tools;
+pub mod task_management;
 
 use async_trait::async_trait;
 use serde_json::Value;
