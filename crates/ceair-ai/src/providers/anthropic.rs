@@ -49,13 +49,13 @@ pub struct AnthropicProvider {
 
 impl AnthropicProvider {
     /// 创建新的 Anthropic 提供者实例
-    pub fn new(config: ProviderConfig) -> Self {
+    pub fn new(config: ProviderConfig) -> AiResult<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("无法创建 HTTP 客户端");
+            .map_err(|e| AiError::Config(format!("无法创建 HTTP 客户端: {}", e)))?;
 
-        Self {
+        Ok(Self {
             client,
             api_key: config.api_key,
             base_url: config
@@ -64,7 +64,7 @@ impl AnthropicProvider {
             default_model: config
                 .default_model
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
-        }
+        })
     }
 
     /// 获取 Messages API 完整 URL
@@ -597,14 +597,14 @@ mod tests {
     #[test]
     fn test_provider_name() {
         // 验证提供者名称
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         assert_eq!(provider.name(), "anthropic");
     }
 
     #[test]
     fn test_default_config() {
         // 验证默认配置值
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         assert_eq!(provider.base_url, "https://api.anthropic.com");
         assert_eq!(provider.default_model, "claude-sonnet-4-20250514");
     }
@@ -612,7 +612,7 @@ mod tests {
     #[test]
     fn test_build_request_body_basic() {
         // 验证基本请求体构建
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("claude-sonnet-4-20250514")
             .temperature(0.7)
@@ -634,7 +634,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_system_prompt() {
         // 验证系统消息被提取为顶层字段
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let messages = vec![
             ChatMessage::system("你是一个编程助手"),
             ChatMessage::user("你好"),
@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_tools() {
         // 验证工具定义转换为 Anthropic 格式
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("北京天气如何？")];
         let tools = vec![ToolDefinition {
             tool_type: "function".to_string(),
@@ -716,7 +716,7 @@ mod tests {
     #[test]
     fn test_parse_response_text() {
         // 验证文本响应解析
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "msg_abc123",
             "type": "message",
@@ -743,7 +743,7 @@ mod tests {
     #[test]
     fn test_parse_response_with_tool_use() {
         // 验证带工具调用的响应解析
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "msg_456",
             "type": "message",
@@ -859,7 +859,7 @@ mod tests {
     #[test]
     fn test_usage_field_mapping() {
         // 验证 Anthropic 用量字段名映射到统一格式
-        let provider = AnthropicProvider::new(test_config());
+        let provider = AnthropicProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "msg_789",
             "type": "message",

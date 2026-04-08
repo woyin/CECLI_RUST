@@ -378,19 +378,19 @@ impl ProviderFactory {
     ) -> AiResult<Box<dyn AiProvider>> {
         match name.to_lowercase().as_str() {
             "openai" => Ok(Box::new(
-                crate::providers::openai::OpenAiProvider::new(config),
+                crate::providers::openai::OpenAiProvider::new(config)?,
             )),
             "anthropic" | "claude" => Ok(Box::new(
-                crate::providers::anthropic::AnthropicProvider::new(config),
+                crate::providers::anthropic::AnthropicProvider::new(config)?,
             )),
             "deepseek" => Ok(Box::new(
-                crate::providers::deepseek::DeepSeekProvider::new(config),
+                crate::providers::deepseek::DeepSeekProvider::new(config)?,
             )),
             "qianwen" | "tongyi" | "dashscope" => Ok(Box::new(
-                crate::providers::qianwen::QianwenProvider::new(config),
+                crate::providers::qianwen::QianwenProvider::new(config)?,
             )),
             "wenxin" | "ernie" | "baidu" => Ok(Box::new(
-                crate::providers::wenxin::WenxinProvider::new(config),
+                crate::providers::wenxin::WenxinProvider::new(config)?,
             )),
             other => Err(AiError::UnsupportedProvider(other.to_string())),
         }

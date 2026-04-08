@@ -16,6 +16,7 @@ use crate::grep_tool::GrepTool;
 use crate::lsp_tool::LspTool;
 use crate::notebook_tool::NotebookTool;
 use crate::python_tool::PythonTool;
+use crate::security::{FileOperationGuard, PathValidator, SecurityPolicy};
 use crate::ssh_tool::SshTool;
 use crate::task_tool::TaskTool;
 use crate::{Tool, ToolError, ToolResult};
@@ -184,49 +185,43 @@ impl Default for ToolRegistry {
 
 /// 创建包含所有内置工具的默认注册表
 ///
-/// 注册以下工具：
-/// - `read_file`: 读取文件内容
-/// - `write_file`: 写入文件内容
-/// - `edit_file`: 编辑文件（搜索替换）
-/// - `edit`: 精确文件内容替换
-/// - `list_directory`: 列出目录内容
-/// - `search_files`: 搜索文件
-/// - `delete_file`: 删除文件
-/// - `bash`: 执行 shell 命令
-/// - `grep`: 文本搜索
-/// - `find`: 文件查找
-/// - `ssh`: 远程命令执行
-/// - `lsp`: 语言服务器协议集成
-/// - `calc`: 数学表达式求值
-/// - `task`: 任务代理委派
-/// - `python`: Python 代码执行
-/// - `notebook`: Jupyter Notebook 操作
-/// - `browser`: 浏览器自动化
-/// - `ast_grep`: 基于语法树的代码搜索和编辑
-pub fn create_default_registry() -> ToolRegistry {
+/// 使用给定的安全策略包装文件操作工具，确保路径访问受控。
+/// 文件工具（read_file, write_file, edit_file, delete_file, list_directory, search_files）
+/// 会被 `FileOperationGuard` 包装，在执行前进行安全检查。
+///
+/// # 参数
+/// - `policy`: 安全策略配置，控制允许/阻止的路径
+pub fn create_default_registry(policy: SecurityPolicy) -> ToolRegistry {
     let registry = ToolRegistry::new();
+    let validator = Arc::new(PathValidator::new(policy));
 
-    // 注册所有内置工具
     info!("正在创建默认工具注册表...");
 
-    registry.register(Arc::new(ReadFileTool));
-    registry.register(Arc::new(WriteFileTool));
-    registry.register(Arc::new(EditFileTool));
-    registry.register(Arc::new(EditTool));
-    registry.register(Arc::new(ListDirectoryTool));
-    registry.register(Arc::new(SearchFilesTool));
-    registry.register(Arc::new(DeleteFileTool));
+    // 注册文件操作工具（带安全守卫）
+    // 所有接受路径参数的工具都必须包装 FileOperationGuard，
+    // 否则模型可以通过选择未守卫的工具绕过沙箱限制。
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(ReadFileTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(WriteFileTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(EditFileTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(EditTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(ListDirectoryTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(SearchFilesTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(DeleteFileTool), validator.clone())));
+
+    // Grep/Find/Notebook/AST 都接受路径参数，必须加安全守卫
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(GrepTool::new()), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(FindTool::new()), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(NotebookTool), validator.clone())));
+    registry.register(Arc::new(FileOperationGuard::new(Arc::new(AstTool), validator.clone())));
+
+    // 非路径类工具（无需安全守卫）
     registry.register(Arc::new(BashTool::new()));
-    registry.register(Arc::new(GrepTool::new()));
-    registry.register(Arc::new(FindTool::new()));
     registry.register(Arc::new(SshTool));
     registry.register(Arc::new(LspTool));
     registry.register(Arc::new(CalcTool));
     registry.register(Arc::new(TaskTool));
     registry.register(Arc::new(PythonTool::new()));
-    registry.register(Arc::new(NotebookTool));
     registry.register(Arc::new(BrowserTool::new()));
-    registry.register(Arc::new(AstTool));
 
     info!("默认工具注册表已创建，共 {} 个工具", registry.len());
 
@@ -393,9 +388,8 @@ mod tests {
     /// 测试默认注册表包含所有内置工具
     #[test]
     fn test_create_default_registry() {
-        let registry = create_default_registry();
+        let registry = create_default_registry(SecurityPolicy::default_policy());
 
-        // 验证所有内置工具已注册
         assert_eq!(registry.len(), 18);
 
         // 验证每个内置工具都存在
@@ -432,7 +426,7 @@ mod tests {
     /// 测试默认注册表的 Schema 输出
     #[test]
     fn test_default_registry_schemas() {
-        let registry = create_default_registry();
+        let registry = create_default_registry(SecurityPolicy::default_policy());
         let schemas = registry.get_schemas();
 
         let arr = schemas.as_array().unwrap();
@@ -456,5 +450,43 @@ mod tests {
         assert_eq!(registry.len(), 0);
         assert!(registry.list_tools().is_empty());
         assert_eq!(registry.get_schemas(), Value::Array(vec![]));
+    }
+
+    /// 测试所有路径类工具都被 FileOperationGuard 包装
+    ///
+    /// 回归测试：确保 edit, grep, find, notebook, ast_grep 等接受路径参数的工具
+    /// 全部被安全守卫包装，防止绕过沙箱限制。
+    #[tokio::test]
+    async fn test_all_path_tools_are_guarded() {
+        use std::path::PathBuf;
+
+        // 创建仅允许 /tmp/test-sandbox 目录的严格策略
+        let policy = SecurityPolicy {
+            allowed_dirs: vec![PathBuf::from("/tmp/test-sandbox-ceair")],
+            blocked_paths: SecurityPolicy::default_policy().blocked_paths,
+            allow_path_traversal: false,
+        };
+        let registry = create_default_registry(policy);
+
+        // 所有接受路径参数的工具在尝试访问沙箱外路径时应返回安全错误
+        let path_tools = vec![
+            "read_file", "write_file", "edit_file", "edit",
+            "list_directory", "search_files", "delete_file",
+            "grep", "find", "notebook", "ast_grep",
+        ];
+
+        for tool_name in path_tools {
+            let tool = registry.get(tool_name).expect(&format!("工具 {} 应存在", tool_name));
+            let result = tool.execute(json!({
+                "path": "/etc/shadow",
+            })).await;
+
+            // 应该被安全策略拦截（SecurityViolation 或类似错误）
+            assert!(
+                result.is_err(),
+                "工具 '{}' 应该拒绝访问 /etc/shadow，但返回了 Ok",
+                tool_name
+            );
+        }
     }
 }

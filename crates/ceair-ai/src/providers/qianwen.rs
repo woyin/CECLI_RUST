@@ -42,13 +42,13 @@ pub struct QianwenProvider {
 
 impl QianwenProvider {
     /// 创建新的通义千问提供者实例
-    pub fn new(config: ProviderConfig) -> Self {
+    pub fn new(config: ProviderConfig) -> AiResult<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("无法创建 HTTP 客户端");
+            .map_err(|e| AiError::Config(format!("无法创建 HTTP 客户端: {}", e)))?;
 
-        Self {
+        Ok(Self {
             client,
             api_key: config.api_key,
             base_url: config
@@ -57,7 +57,7 @@ impl QianwenProvider {
             default_model: config
                 .default_model
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
-        }
+        })
     }
 
     /// 确定实际使用的模型名称
@@ -622,14 +622,14 @@ mod tests {
     #[test]
     fn test_provider_name() {
         // 验证提供者名称
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         assert_eq!(provider.name(), "qianwen");
     }
 
     #[test]
     fn test_default_model() {
         // 验证默认模型
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         assert_eq!(provider.default_model, DEFAULT_MODEL);
     }
 
@@ -639,14 +639,14 @@ mod tests {
         let mut config = test_config();
         config.default_model = Some("qwen-max".to_string());
 
-        let provider = QianwenProvider::new(config);
+        let provider = QianwenProvider::new(config).unwrap();
         assert_eq!(provider.default_model, "qwen-max");
     }
 
     #[test]
     fn test_build_request_body() {
         // 验证通义千问请求体格式
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         let messages = vec![
             ChatMessage::system("你是一个助手"),
             ChatMessage::user("你好"),
@@ -688,7 +688,7 @@ mod tests {
     #[test]
     fn test_parse_response_text_format() {
         // 验证旧版 output.text 格式的响应解析
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "output": {
                 "text": "你好！我是通义千问。",
@@ -713,7 +713,7 @@ mod tests {
     #[test]
     fn test_parse_response_choices_format() {
         // 验证新版 choices 格式的响应解析
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "output": {
                 "choices": [{
@@ -818,7 +818,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_tools() {
         // 验证带工具定义的请求体
-        let provider = QianwenProvider::new(test_config());
+        let provider = QianwenProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("查天气")];
         let tools = vec![ToolDefinition {
             tool_type: "function".to_string(),

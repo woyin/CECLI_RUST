@@ -27,13 +27,27 @@ pub enum BrowserAction {
         selector: Option<String>,
     },
     /// 点击元素
-    Click { selector: String },
+    Click {
+        url: String,
+        selector: String,
+    },
     /// 输入文本
-    Type { selector: String, text: String },
+    Type {
+        url: String,
+        selector: String,
+        text: String,
+    },
     /// 执行 JavaScript
-    Evaluate { script: String },
+    Evaluate {
+        url: String,
+        script: String,
+    },
     /// 等待元素
-    WaitFor { selector: String, timeout_ms: u64 },
+    WaitFor {
+        url: String,
+        selector: String,
+        timeout_ms: u64,
+    },
 }
 
 /// 浏览器结果
@@ -110,27 +124,41 @@ impl BrowserTool {
                 args.push(url.clone());
                 args.push(script);
             }
-            BrowserAction::Click { selector } => {
+            BrowserAction::Click { url, selector } => {
                 args.push("click".to_string());
+                if self.headless {
+                    args.push("--headless".to_string());
+                }
+                args.push(url.clone());
                 args.push(selector.clone());
             }
-            BrowserAction::Type { selector, text } => {
+            BrowserAction::Type { url, selector, text } => {
                 args.push("fill".to_string());
+                if self.headless {
+                    args.push("--headless".to_string());
+                }
+                args.push(url.clone());
                 args.push(selector.clone());
                 args.push(text.clone());
             }
-            BrowserAction::Evaluate { script } => {
+            BrowserAction::Evaluate { url, script } => {
                 args.push("eval".to_string());
                 if self.headless {
                     args.push("--headless".to_string());
                 }
+                args.push(url.clone());
                 args.push(script.clone());
             }
             BrowserAction::WaitFor {
+                url,
                 selector,
                 timeout_ms,
             } => {
                 args.push("wait-for".to_string());
+                if self.headless {
+                    args.push("--headless".to_string());
+                }
+                args.push(url.clone());
                 args.push(selector.clone());
                 args.push("--timeout".to_string());
                 args.push(timeout_ms.to_string());
@@ -292,6 +320,12 @@ impl Tool for BrowserTool {
                 }
             }
             "click" => {
+                let url = params
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        ToolError::InvalidParams("click 需要 url 参数".to_string())
+                    })?;
                 let selector = params
                     .get("selector")
                     .and_then(|v| v.as_str())
@@ -299,10 +333,17 @@ impl Tool for BrowserTool {
                         ToolError::InvalidParams("click 需要 selector 参数".to_string())
                     })?;
                 BrowserAction::Click {
+                    url: url.to_string(),
                     selector: selector.to_string(),
                 }
             }
             "type" => {
+                let url = params
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        ToolError::InvalidParams("type 需要 url 参数".to_string())
+                    })?;
                 let selector = params
                     .get("selector")
                     .and_then(|v| v.as_str())
@@ -316,11 +357,18 @@ impl Tool for BrowserTool {
                         ToolError::InvalidParams("type 需要 text 参数".to_string())
                     })?;
                 BrowserAction::Type {
+                    url: url.to_string(),
                     selector: selector.to_string(),
                     text: text.to_string(),
                 }
             }
             "evaluate" => {
+                let url = params
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        ToolError::InvalidParams("evaluate 需要 url 参数".to_string())
+                    })?;
                 let script = params
                     .get("script")
                     .and_then(|v| v.as_str())
@@ -328,10 +376,17 @@ impl Tool for BrowserTool {
                         ToolError::InvalidParams("evaluate 需要 script 参数".to_string())
                     })?;
                 BrowserAction::Evaluate {
+                    url: url.to_string(),
                     script: script.to_string(),
                 }
             }
             "wait_for" => {
+                let url = params
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        ToolError::InvalidParams("wait_for 需要 url 参数".to_string())
+                    })?;
                 let selector = params
                     .get("selector")
                     .and_then(|v| v.as_str())
@@ -343,6 +398,7 @@ impl Tool for BrowserTool {
                     .and_then(|v| v.as_u64())
                     .unwrap_or(5000);
                 BrowserAction::WaitFor {
+                    url: url.to_string(),
                     selector: selector.to_string(),
                     timeout_ms,
                 }
@@ -458,10 +514,12 @@ mod tests {
     #[test]
     fn test_click_action() {
         let action = BrowserAction::Click {
+            url: "https://example.com".to_string(),
             selector: "button.submit".to_string(),
         };
         let json = serde_json::to_value(&action).unwrap();
         assert_eq!(json["type"], "click");
+        assert_eq!(json["url"], "https://example.com");
         assert_eq!(json["selector"], "button.submit");
     }
 
@@ -469,11 +527,13 @@ mod tests {
     #[test]
     fn test_type_action() {
         let action = BrowserAction::Type {
+            url: "https://example.com".to_string(),
             selector: "#search".to_string(),
             text: "查询内容".to_string(),
         };
         let json = serde_json::to_value(&action).unwrap();
         assert_eq!(json["type"], "type");
+        assert_eq!(json["url"], "https://example.com");
         assert_eq!(json["selector"], "#search");
         assert_eq!(json["text"], "查询内容");
     }
@@ -482,10 +542,12 @@ mod tests {
     #[test]
     fn test_evaluate_action() {
         let action = BrowserAction::Evaluate {
+            url: "https://example.com".to_string(),
             script: "document.title".to_string(),
         };
         let json = serde_json::to_value(&action).unwrap();
         assert_eq!(json["type"], "evaluate");
+        assert_eq!(json["url"], "https://example.com");
         assert_eq!(json["script"], "document.title");
     }
 

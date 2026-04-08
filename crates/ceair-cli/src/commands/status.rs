@@ -7,7 +7,7 @@ use anyhow::Result;
 use clap::Args;
 
 use ceair_config::CeairConfig;
-use ceair_tools::create_default_registry;
+use ceair_tools::{create_default_registry, SecurityPolicy};
 
 // ============================================================
 // 状态命令参数定义
@@ -137,7 +137,7 @@ fn print_tools_section(verbose: bool) {
     println!("{}", "─".repeat(50));
 
     // 创建默认工具注册表以获取工具列表
-    let registry = create_default_registry();
+    let registry = create_default_registry(SecurityPolicy::default_policy());
     let tool_names = registry.list_tools();
 
     println!("  总计: {} 个工具", tool_names.len());

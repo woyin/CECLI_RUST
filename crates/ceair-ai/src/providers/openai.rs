@@ -50,13 +50,16 @@ pub struct OpenAiProvider {
 
 impl OpenAiProvider {
     /// 创建新的 OpenAI 兼容提供者实例
-    pub fn new(config: ProviderConfig) -> Self {
+    ///
+    /// # 错误
+    /// 当 HTTP 客户端初始化失败时返回 `AiError::Config`
+    pub fn new(config: ProviderConfig) -> AiResult<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("无法创建 HTTP 客户端");
+            .map_err(|e| AiError::Config(format!("无法创建 HTTP 客户端: {}", e)))?;
 
-        Self {
+        Ok(Self {
             client,
             api_key: config.api_key,
             base_url: config
@@ -65,7 +68,7 @@ impl OpenAiProvider {
             default_model: config
                 .default_model
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
-        }
+        })
     }
 
     /// 获取聊天补全 API 完整 URL
@@ -377,14 +380,14 @@ mod tests {
     #[test]
     fn test_provider_name() {
         // 验证提供者名称
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         assert_eq!(provider.name(), "openai");
     }
 
     #[test]
     fn test_default_config() {
         // 验证默认配置值
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         assert_eq!(provider.base_url, "https://api.openai.com/v1");
         assert_eq!(provider.default_model, "gpt-4o");
     }
@@ -396,7 +399,7 @@ mod tests {
         config.base_url = Some("http://localhost:11434/v1".to_string());
         config.default_model = Some("llama3".to_string());
 
-        let provider = OpenAiProvider::new(config);
+        let provider = OpenAiProvider::new(config).unwrap();
         assert_eq!(provider.base_url, "http://localhost:11434/v1");
         assert_eq!(provider.default_model, "llama3");
         assert_eq!(
@@ -408,7 +411,7 @@ mod tests {
     #[test]
     fn test_build_request_body_basic() {
         // 验证基本请求体构建
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("gpt-4o").temperature(0.7).max_tokens(4096);
 
@@ -427,7 +430,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_tools() {
         // 验证带工具定义的请求体
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("北京天气如何？")];
         let tools = vec![ToolDefinition {
             tool_type: "function".to_string(),
@@ -462,7 +465,7 @@ mod tests {
     #[test]
     fn test_build_request_body_streaming() {
         // 验证流式请求体包含 stream_options
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("gpt-4o");
 
@@ -476,7 +479,7 @@ mod tests {
     #[test]
     fn test_parse_response_basic() {
         // 验证基本响应解析
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "chatcmpl-abc123",
             "object": "chat.completion",
@@ -510,7 +513,7 @@ mod tests {
     #[test]
     fn test_parse_response_with_tool_calls() {
         // 验证带工具调用的响应解析
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "chatcmpl-456",
             "model": "gpt-4o",
@@ -553,7 +556,7 @@ mod tests {
     #[test]
     fn test_parse_response_empty_content() {
         // 验证 content 为 null 时返回空字符串
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "model": "gpt-4o",
             "choices": [{
@@ -607,7 +610,7 @@ mod tests {
     #[test]
     fn test_resolve_model_default() {
         // 验证空模型名时使用默认模型
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let options = ChatOptions::default();
         assert_eq!(provider.resolve_model(&options), "gpt-4o");
     }
@@ -615,7 +618,7 @@ mod tests {
     #[test]
     fn test_resolve_model_custom() {
         // 验证使用自定义模型名
-        let provider = OpenAiProvider::new(test_config());
+        let provider = OpenAiProvider::new(test_config()).unwrap();
         let options = ChatOptions::with_model("gpt-4-turbo");
         assert_eq!(provider.resolve_model(&options), "gpt-4-turbo");
     }

@@ -41,14 +41,13 @@ pub struct DeepSeekProvider {
 
 impl DeepSeekProvider {
     /// 创建新的 DeepSeek 提供者实例
-    pub fn new(config: ProviderConfig) -> Self {
-        // 构建带超时的 HTTP 客户端
+    pub fn new(config: ProviderConfig) -> AiResult<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("无法创建 HTTP 客户端");
+            .map_err(|e| AiError::Config(format!("无法创建 HTTP 客户端: {}", e)))?;
 
-        Self {
+        Ok(Self {
             client,
             api_key: config.api_key,
             base_url: config
@@ -57,7 +56,7 @@ impl DeepSeekProvider {
             default_model: config
                 .default_model
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
-        }
+        })
     }
 
     /// 获取聊天补全 API 完整 URL
@@ -435,14 +434,14 @@ mod tests {
     #[test]
     fn test_provider_name() {
         // 验证提供者名称
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         assert_eq!(provider.name(), "deepseek");
     }
 
     #[test]
     fn test_default_model() {
         // 验证默认模型设置
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         assert_eq!(provider.default_model, DEFAULT_MODEL);
     }
 
@@ -452,14 +451,14 @@ mod tests {
         let mut config = test_config();
         config.base_url = Some("https://custom.api.com/v1".to_string());
 
-        let provider = DeepSeekProvider::new(config);
+        let provider = DeepSeekProvider::new(config).unwrap();
         assert_eq!(provider.base_url, "https://custom.api.com/v1");
     }
 
     #[test]
     fn test_completions_url() {
         // 验证补全 API URL 拼接
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         assert_eq!(
             provider.completions_url(),
             "https://api.deepseek.com/v1/chat/completions"
@@ -469,7 +468,7 @@ mod tests {
     #[test]
     fn test_build_request_body_basic() {
         // 验证基本请求体构建
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("deepseek-chat").temperature(0.7);
 
@@ -485,7 +484,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_tools() {
         // 验证带工具定义的请求体
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("北京天气如何？")];
         let tools = vec![ToolDefinition {
             tool_type: "function".to_string(),
@@ -517,7 +516,7 @@ mod tests {
     #[test]
     fn test_build_request_body_stream() {
         // 验证流式请求体包含 stream_options
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("deepseek-chat");
 
@@ -530,7 +529,7 @@ mod tests {
     #[test]
     fn test_parse_response() {
         // 验证响应解析
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "chatcmpl-123",
             "object": "chat.completion",
@@ -562,7 +561,7 @@ mod tests {
     #[test]
     fn test_parse_response_with_tool_calls() {
         // 验证带工具调用的响应解析
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "chatcmpl-456",
             "model": "deepseek-chat",
@@ -622,7 +621,7 @@ mod tests {
     #[test]
     fn test_resolve_model_default() {
         // 验证空模型名时使用默认模型
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let options = ChatOptions::default();
         assert_eq!(provider.resolve_model(&options), DEFAULT_MODEL);
     }
@@ -630,7 +629,7 @@ mod tests {
     #[test]
     fn test_resolve_model_custom() {
         // 验证使用自定义模型名
-        let provider = DeepSeekProvider::new(test_config());
+        let provider = DeepSeekProvider::new(test_config()).unwrap();
         let options = ChatOptions::with_model("deepseek-coder");
         assert_eq!(provider.resolve_model(&options), "deepseek-coder");
     }

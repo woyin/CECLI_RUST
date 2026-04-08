@@ -14,7 +14,7 @@ use ceair_ai::{
 use ceair_ai::provider::{FunctionDefinition, ToolParameter};
 use ceair_config::CeairConfig;
 use ceair_core::message::Role;
-use ceair_tools::{create_default_registry, ToolRegistry};
+use ceair_tools::{create_default_registry, SecurityPolicy, ToolRegistry};
 use ceair_tui::App;
 
 // ============================================================
@@ -74,7 +74,7 @@ pub async fn execute(args: LaunchArgs, config: CeairConfig) -> Result<()> {
     info!("AI 提供商已就绪: {}", provider.name());
 
     // 创建并注册默认工具集
-    let registry = setup_tool_registry();
+    let registry = setup_tool_registry(&config);
     let tool_count = registry.len();
     info!("工具注册表已就绪，共 {} 个工具", tool_count);
 
@@ -134,7 +134,10 @@ fn setup_provider(
     // 构建提供商配置
     let provider_config = ProviderConfig {
         api_key,
-        api_secret: None,
+        api_secret: config.ai.api_secret.clone().or_else(|| {
+            let env_secret = format!("{}_API_SECRET", provider_name.to_uppercase());
+            std::env::var(&env_secret).ok()
+        }),
         base_url: config.ai.base_url.clone(),
         default_model: Some(
             args.model.clone().unwrap_or_else(|| config.ai.model.clone()),
@@ -154,9 +157,27 @@ fn setup_provider(
 
 /// 创建并配置默认工具注册表
 ///
-/// 注册所有内置的文件操作工具（读取、写入、编辑、搜索等）
-fn setup_tool_registry() -> ToolRegistry {
-    let registry = create_default_registry();
+/// 根据配置中的 `tools.allowed_paths`、`tools.blocked_paths` 构建安全策略，
+/// 并用 `FileOperationGuard` 包装文件操作工具。
+/// 用户配置的 blocked_paths 会追加到默认敏感路径列表中，而非替换。
+fn setup_tool_registry(config: &CeairConfig) -> ToolRegistry {
+    // 以默认安全策略为基础（包含 /etc, ~/.ssh, ~/.aws 等敏感路径）
+    let mut policy = SecurityPolicy::default_policy();
+
+    // 用户配置的允许路径覆盖默认值
+    if !config.tools.allowed_paths.is_empty() {
+        policy.allowed_dirs = config.tools.allowed_paths.clone();
+    }
+
+    // 用户配置的阻止路径追加到默认列表（不替换）
+    for blocked in &config.tools.blocked_paths {
+        if !policy.blocked_paths.contains(blocked) {
+            policy.blocked_paths.push(blocked.clone());
+        }
+    }
+
+    policy.allow_path_traversal = false;
+    let registry = create_default_registry(policy);
     info!(
         "已注册工具: {:?}",
         registry.list_tools()

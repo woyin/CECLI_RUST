@@ -133,9 +133,9 @@ impl SshTool {
             }
         }
 
-        // 禁用严格主机密钥检查（避免交互式确认）
+        // 默认启用严格主机密钥检查（首次连接时自动接受新密钥）
         args.push("-o".to_string());
-        args.push("StrictHostKeyChecking=no".to_string());
+        args.push("StrictHostKeyChecking=accept-new".to_string());
 
         // 添加用户@主机
         args.push(format!("{}@{}", conn.user, conn.host));

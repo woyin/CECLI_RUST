@@ -27,6 +27,10 @@ pub struct AiConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
 
+    /// API 辅助密钥（部分服务商需要，如文心一言的 Secret Key）
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_secret: Option<String>,
+
     /// 使用的模型名称
     pub model: String,
 
@@ -47,6 +51,7 @@ impl Default for AiConfig {
         Self {
             provider: "openai".to_string(),
             api_key: None,
+            api_secret: None,
             model: "gpt-4".to_string(),
             temperature: 0.7,
             max_tokens: 4096,

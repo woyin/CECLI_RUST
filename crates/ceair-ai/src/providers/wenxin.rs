@@ -82,16 +82,13 @@ pub struct WenxinProvider {
 
 impl WenxinProvider {
     /// 创建新的文心一言提供者实例
-    ///
-    /// # 注意
-    /// 文心一言需要同时提供 `api_key` 和 `api_secret` 才能正常工作。
-    pub fn new(config: ProviderConfig) -> Self {
+    pub fn new(config: ProviderConfig) -> AiResult<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("无法创建 HTTP 客户端");
+            .map_err(|e| AiError::Config(format!("无法创建 HTTP 客户端: {}", e)))?;
 
-        Self {
+        Ok(Self {
             client,
             api_key: config.api_key,
             api_secret: config.api_secret.unwrap_or_default(),
@@ -102,7 +99,7 @@ impl WenxinProvider {
                 .default_model
                 .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
             cached_token: Arc::new(RwLock::new(None)),
-        }
+        })
     }
 
     /// 确定实际使用的模型名称
@@ -728,14 +725,14 @@ mod tests {
     #[test]
     fn test_provider_name() {
         // 验证提供者名称
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         assert_eq!(provider.name(), "wenxin");
     }
 
     #[test]
     fn test_default_model() {
         // 验证默认模型
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         assert_eq!(provider.default_model, DEFAULT_MODEL);
     }
 
@@ -752,7 +749,7 @@ mod tests {
     #[test]
     fn test_api_url() {
         // 验证 API URL 拼接
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let url = provider.api_url("completions_pro", "test_token");
         assert!(url.contains("completions_pro"));
         assert!(url.contains("access_token=test_token"));
@@ -761,7 +758,7 @@ mod tests {
     #[test]
     fn test_build_request_body_basic() {
         // 验证基本请求体
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::with_model("ernie-bot-4").temperature(0.7);
 
@@ -775,7 +772,7 @@ mod tests {
     #[test]
     fn test_build_request_body_system_message() {
         // 验证系统消息被提取为独立参数
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let messages = vec![
             ChatMessage::system("你是一个编程助手"),
             ChatMessage::user("写一个排序算法"),
@@ -795,7 +792,7 @@ mod tests {
     #[test]
     fn test_build_request_body_with_functions() {
         // 验证带函数定义的请求体
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("查天气")];
         let tools = vec![ToolDefinition {
             tool_type: "function".to_string(),
@@ -819,7 +816,7 @@ mod tests {
     #[test]
     fn test_parse_response_basic() {
         // 验证基本响应解析
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "as-xxx",
             "result": "你好！我是文心一言。",
@@ -842,7 +839,7 @@ mod tests {
     #[test]
     fn test_parse_response_with_function_call() {
         // 验证带函数调用的响应解析
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "id": "as-xxx",
             "result": "",
@@ -868,7 +865,7 @@ mod tests {
     #[test]
     fn test_parse_response_error() {
         // 验证错误响应解析
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let response_json = serde_json::json!({
             "error_code": 17,
             "error_msg": "Open api daily request limit reached"
@@ -983,7 +980,7 @@ mod tests {
         let mut config = test_config();
         config.api_secret = None;
 
-        let provider = WenxinProvider::new(config);
+        let provider = WenxinProvider::new(config).unwrap();
         let result = provider.get_access_token().await;
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), AiError::Auth(_)));
@@ -992,7 +989,7 @@ mod tests {
     #[test]
     fn test_stream_request_body() {
         // 验证流式请求体包含 stream: true
-        let provider = WenxinProvider::new(test_config());
+        let provider = WenxinProvider::new(test_config()).unwrap();
         let messages = vec![ChatMessage::user("你好")];
         let options = ChatOptions::default();
 
