@@ -112,6 +112,15 @@ pub mod memdir;
 /// MEMORY.md 索引文件
 pub mod memory_index;
 
+/// 验证 Agent 框架
+pub mod verification;
+
+/// Prompt Suggestion 引擎
+pub mod prompt_suggestion;
+
+/// Buddy 异步观察者
+pub mod buddy_observer;
+
 /// 代理管道模块
 pub mod pipeline;
 
