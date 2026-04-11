@@ -76,6 +76,9 @@ pub mod buddy;
 /// KAIROS — Post-Sampling Hook 系统
 pub mod kairos;
 
+/// 上下文感知 Tips 系统
+pub mod tips;
+
 /// 代理管道模块
 pub mod pipeline;
 
