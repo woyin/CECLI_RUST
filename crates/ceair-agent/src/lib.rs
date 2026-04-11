@@ -121,6 +121,12 @@ pub mod prompt_suggestion;
 /// Buddy 异步观察者
 pub mod buddy_observer;
 
+/// AI 驱动的记忆召回
+pub mod memory_recall;
+
+/// AutoDream 整合流程
+pub mod dream_executor;
+
 /// 代理管道模块
 pub mod pipeline;
 
