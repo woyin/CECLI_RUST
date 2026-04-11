@@ -441,6 +441,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ceair-invariant"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "ceair-mcp"
 version = "0.1.0"
 dependencies = [
