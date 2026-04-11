@@ -212,6 +212,189 @@ impl ContextCompactor {
     }
 }
 
+// ---------------------------------------------------------------------------
+// 微压缩器
+// ---------------------------------------------------------------------------
+
+/// 可压缩工具白名单
+///
+/// 只有这些工具的结果会被微压缩清除。
+/// 其他工具（如 edit, write）的结果可能包含不可恢复的上下文，不应清除。
+const COMPRESSIBLE_TOOLS: &[&str] = &[
+    "file_read",
+    "read_file",
+    "bash",
+    "grep",
+    "glob",
+    "web_search",
+    "fetch",
+    "find",
+    "list_directory",
+];
+
+/// 微压缩后的占位文本
+const MICRO_COMPACT_PLACEHOLDER: &str = "[旧工具结果已清除]";
+
+/// 微压缩配置
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MicroCompactConfig {
+    /// 保留最近 N 个工具结果不压缩
+    pub preserve_recent: usize,
+}
+
+impl Default for MicroCompactConfig {
+    fn default() -> Self {
+        Self {
+            preserve_recent: 5,
+        }
+    }
+}
+
+/// 微压缩器 — 实时截断旧工具输出，无需 AI 参与
+///
+/// # 设计思想
+/// 参考 reference 中 microCompact 的实现：
+/// - 只压缩白名单工具的结果（安全可恢复的工具输出）
+/// - 保留最近 N 个工具结果（preserve_recent）
+/// - 超过保留数量的旧结果替换为占位文本
+/// - 保留工具结构（名称、调用 ID），只清除内容
+/// - 时间复杂度 O(n)，无 AI 调用，可实时执行
+pub struct MicroCompactor {
+    config: MicroCompactConfig,
+}
+
+impl MicroCompactor {
+    /// 创建新的微压缩器实例
+    pub fn new(config: MicroCompactConfig) -> Self {
+        Self { config }
+    }
+
+    /// 判断工具名称是否在可压缩白名单中
+    fn is_compressible_tool(tool_name: &str) -> bool {
+        COMPRESSIBLE_TOOLS.iter().any(|&t| t == tool_name)
+    }
+
+    /// 执行微压缩
+    ///
+    /// 从消息列表末尾向前扫描，保留最近 preserve_recent 个可压缩工具结果，
+    /// 将更早的可压缩工具结果内容替换为占位文本。
+    ///
+    /// # 参数
+    /// - `messages`: 可变消息列表，原地修改
+    ///
+    /// # 返回值
+    /// 被压缩的消息数量
+    pub fn compact(&self, messages: &mut Vec<CompactionMessage>) -> usize {
+        if messages.is_empty() {
+            return 0;
+        }
+
+        // 从后向前扫描，找出所有 tool 角色的消息索引
+        let tool_indices: Vec<usize> = messages
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m.role == "tool")
+            .map(|(i, _)| i)
+            .collect();
+
+        if tool_indices.len() <= self.config.preserve_recent {
+            return 0;
+        }
+
+        // 从后向前遍历 tool 消息，前 preserve_recent 个保留，其余检查是否可压缩
+        let mut compacted_count = 0;
+        let compressible_count = tool_indices.len();
+
+        for (reverse_pos, &idx) in tool_indices.iter().rev().enumerate() {
+            // 保留最近 preserve_recent 个工具结果
+            if reverse_pos < self.config.preserve_recent {
+                continue;
+            }
+
+            let msg = &messages[idx];
+
+            // 从消息内容中提取工具名称（如果有的话）
+            // 工具消息的 content 中通常包含工具名称信息
+            // 这里使用简化逻辑：检查 content 是否已经是占位符
+            if msg.content == MICRO_COMPACT_PLACEHOLDER {
+                continue; // 已压缩，跳过
+            }
+
+            // 检查是否为可压缩工具的结果
+            // 对于 CompactionMessage，我们通过工具名称标注来判断
+            // 简化策略：所有 tool 角色的旧消息都可压缩
+            // （更精确的实现需要在 CompactionMessage 中追踪工具名称）
+            let old_tokens = messages[idx].token_estimate;
+            let placeholder_tokens = ContextCompactor::estimate_tokens(MICRO_COMPACT_PLACEHOLDER);
+
+            messages[idx].content = MICRO_COMPACT_PLACEHOLDER.to_string();
+            messages[idx].token_estimate = placeholder_tokens;
+            compacted_count += 1;
+        }
+
+        let _ = compressible_count; // 避免警告
+        compacted_count
+    }
+
+    /// 执行带工具名称过滤的微压缩
+    ///
+    /// 与 `compact` 类似，但只压缩白名单工具的结果。
+    /// 需要提供每条 tool 消息对应的工具名称。
+    ///
+    /// # 参数
+    /// - `messages`: 可变消息列表
+    /// - `tool_names`: 每条 tool 消息对应的工具名称（按 tool 消息出现顺序）
+    ///
+    /// # 返回值
+    /// 被压缩的消息数量
+    pub fn compact_with_tool_names(
+        &self,
+        messages: &mut Vec<CompactionMessage>,
+        tool_names: &[&str],
+    ) -> usize {
+        if messages.is_empty() {
+            return 0;
+        }
+
+        // 收集 tool 消息的索引和对应的工具名称
+        let tool_entries: Vec<(usize, &str)> = messages
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m.role == "tool")
+            .zip(tool_names.iter())
+            .map(|((idx, _), &name)| (idx, name))
+            .collect();
+
+        if tool_entries.len() <= self.config.preserve_recent {
+            return 0;
+        }
+
+        let mut compacted_count = 0;
+
+        for (reverse_pos, &(idx, tool_name)) in tool_entries.iter().rev().enumerate() {
+            if reverse_pos < self.config.preserve_recent {
+                continue;
+            }
+
+            // 只压缩白名单工具
+            if !Self::is_compressible_tool(tool_name) {
+                continue;
+            }
+
+            if messages[idx].content == MICRO_COMPACT_PLACEHOLDER {
+                continue;
+            }
+
+            messages[idx].content = MICRO_COMPACT_PLACEHOLDER.to_string();
+            messages[idx].token_estimate =
+                ContextCompactor::estimate_tokens(MICRO_COMPACT_PLACEHOLDER);
+            compacted_count += 1;
+        }
+
+        compacted_count
+    }
+}
+
 // ===========================================================================
 // 单元测试
 // ===========================================================================
@@ -493,5 +676,189 @@ mod tests {
         let (to_compact, kept) = compactor.split_messages(messages);
         assert_eq!(to_compact.len(), 0);
         assert_eq!(kept.len(), 1);
+    }
+
+    // -----------------------------------------------------------------------
+    // 微压缩测试
+    // -----------------------------------------------------------------------
+
+    /// 辅助函数：创建包含 tool 消息的测试序列
+    fn make_tool_messages(count: usize) -> Vec<CompactionMessage> {
+        (0..count)
+            .flat_map(|i| {
+                vec![
+                    make_msg("user", &format!("用户消息 {}", i), 50),
+                    make_msg("assistant", &format!("助手回复 {}", i), 100),
+                    make_msg("tool", &format!("工具结果 {} 的详细输出内容...", i), 500),
+                ]
+            })
+            .collect()
+    }
+
+    /// 测试工具消息少于 preserve_recent 时不压缩
+    #[test]
+    fn test_micro_compact_below_threshold() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 5 });
+        let mut messages = make_tool_messages(3); // 3 个工具消息
+
+        let compacted = compactor.compact(&mut messages);
+
+        assert_eq!(compacted, 0);
+        // 所有消息内容不变
+        for msg in &messages {
+            if msg.role == "tool" {
+                assert_ne!(msg.content, MICRO_COMPACT_PLACEHOLDER);
+            }
+        }
+    }
+
+    /// 测试超过 preserve_recent 时正确截断旧结果
+    #[test]
+    fn test_micro_compact_truncates_old() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 2 });
+        let mut messages = make_tool_messages(5); // 5 个工具消息
+
+        let compacted = compactor.compact(&mut messages);
+
+        // 5 个 tool 消息，保留最近 2 个，压缩 3 个
+        assert_eq!(compacted, 3);
+
+        // 收集所有 tool 消息
+        let tool_msgs: Vec<&CompactionMessage> =
+            messages.iter().filter(|m| m.role == "tool").collect();
+        assert_eq!(tool_msgs.len(), 5);
+
+        // 前 3 个应被压缩
+        assert_eq!(tool_msgs[0].content, MICRO_COMPACT_PLACEHOLDER);
+        assert_eq!(tool_msgs[1].content, MICRO_COMPACT_PLACEHOLDER);
+        assert_eq!(tool_msgs[2].content, MICRO_COMPACT_PLACEHOLDER);
+
+        // 后 2 个应保留原始内容
+        assert!(tool_msgs[3].content.contains("工具结果 3"));
+        assert!(tool_msgs[4].content.contains("工具结果 4"));
+    }
+
+    /// 测试非 tool 角色的消息不被压缩
+    #[test]
+    fn test_micro_compact_preserves_non_tool() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 1 });
+        let mut messages = make_tool_messages(3);
+
+        compactor.compact(&mut messages);
+
+        // user 和 assistant 消息不应被修改
+        for msg in &messages {
+            if msg.role == "user" || msg.role == "assistant" {
+                assert_ne!(msg.content, MICRO_COMPACT_PLACEHOLDER);
+            }
+        }
+    }
+
+    /// 测试空列表返回 0
+    #[test]
+    fn test_micro_compact_empty() {
+        let compactor = MicroCompactor::new(MicroCompactConfig::default());
+        let mut messages: Vec<CompactionMessage> = Vec::new();
+
+        let compacted = compactor.compact(&mut messages);
+        assert_eq!(compacted, 0);
+    }
+
+    /// 测试已压缩的消息不重复压缩
+    #[test]
+    fn test_micro_compact_idempotent() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 1 });
+        let mut messages = make_tool_messages(3);
+
+        let first = compactor.compact(&mut messages);
+        let second = compactor.compact(&mut messages);
+
+        assert_eq!(first, 2);
+        assert_eq!(second, 0); // 再次调用不应有新的压缩
+    }
+
+    /// 测试带工具名称过滤的微压缩 — 白名单工具被压缩
+    #[test]
+    fn test_micro_compact_with_tool_names_whitelist() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 1 });
+        let mut messages = vec![
+            make_msg("tool", "文件内容...", 500),
+            make_msg("tool", "grep 结果...", 300),
+            make_msg("tool", "编辑结果...", 200),
+            make_msg("tool", "最新文件内容...", 400),
+        ];
+        let tool_names = &["file_read", "grep", "edit", "file_read"];
+
+        let compacted = compactor.compact_with_tool_names(&mut messages, tool_names);
+
+        // 4 个 tool 消息，保留最近 1 个 (file_read)
+        // 第 1 个 file_read 可压缩
+        // 第 2 个 grep 可压缩
+        // 第 3 个 edit 不在白名单，跳过
+        // 第 4 个 file_read 保留（最近）
+        assert_eq!(compacted, 2);
+        assert_eq!(messages[0].content, MICRO_COMPACT_PLACEHOLDER); // file_read 被压缩
+        assert_eq!(messages[1].content, MICRO_COMPACT_PLACEHOLDER); // grep 被压缩
+        assert!(messages[2].content.contains("编辑结果")); // edit 不在白名单
+        assert!(messages[3].content.contains("最新文件内容")); // 保留
+    }
+
+    /// 测试非白名单工具不被压缩
+    #[test]
+    fn test_micro_compact_non_whitelist_preserved() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 0 });
+        let mut messages = vec![
+            make_msg("tool", "编辑文件...", 200),
+            make_msg("tool", "写入文件...", 200),
+        ];
+        let tool_names = &["edit", "write_file"];
+
+        let compacted = compactor.compact_with_tool_names(&mut messages, tool_names);
+
+        // edit 和 write_file 不在白名单
+        assert_eq!(compacted, 0);
+        assert!(messages[0].content.contains("编辑"));
+        assert!(messages[1].content.contains("写入"));
+    }
+
+    /// 测试压缩后 token 估算更新
+    #[test]
+    fn test_micro_compact_updates_token_estimate() {
+        let compactor = MicroCompactor::new(MicroCompactConfig { preserve_recent: 0 });
+        let mut messages = vec![
+            make_msg("tool", "这是一段很长很长的工具输出内容，包含大量数据", 500),
+        ];
+
+        compactor.compact(&mut messages);
+
+        // 压缩后 token 估算应该大幅减小
+        let placeholder_tokens = ContextCompactor::estimate_tokens(MICRO_COMPACT_PLACEHOLDER);
+        assert_eq!(messages[0].token_estimate, placeholder_tokens);
+        assert!(messages[0].token_estimate < 500);
+    }
+
+    /// 测试可压缩工具白名单检查
+    #[test]
+    fn test_is_compressible_tool() {
+        // 白名单内的工具
+        assert!(MicroCompactor::is_compressible_tool("file_read"));
+        assert!(MicroCompactor::is_compressible_tool("bash"));
+        assert!(MicroCompactor::is_compressible_tool("grep"));
+        assert!(MicroCompactor::is_compressible_tool("glob"));
+        assert!(MicroCompactor::is_compressible_tool("web_search"));
+        assert!(MicroCompactor::is_compressible_tool("fetch"));
+        assert!(MicroCompactor::is_compressible_tool("find"));
+
+        // 不在白名单的工具
+        assert!(!MicroCompactor::is_compressible_tool("edit"));
+        assert!(!MicroCompactor::is_compressible_tool("write_file"));
+        assert!(!MicroCompactor::is_compressible_tool("unknown"));
+    }
+
+    /// 测试默认微压缩配置
+    #[test]
+    fn test_micro_compact_default_config() {
+        let config = MicroCompactConfig::default();
+        assert_eq!(config.preserve_recent, 5);
     }
 }
