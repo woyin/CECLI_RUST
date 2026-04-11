@@ -70,6 +70,9 @@ pub mod token_budget;
 /// 任务系统模块 — 任务 ID、状态机、注册表
 pub mod task_system;
 
+/// Buddy System — 确定性伙伴身份生成
+pub mod buddy;
+
 /// 代理管道模块
 pub mod pipeline;
 
