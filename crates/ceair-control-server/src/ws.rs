@@ -43,7 +43,7 @@ async fn handle_socket(socket: WebSocket, runtime: Arc<WorkerRuntime>) {
     let mut event_rx = runtime.subscribe_events();
 
     // Forward server events to the WebSocket client
-    let send_task = tokio::spawn(async move {
+    let mut send_task = tokio::spawn(async move {
         while let Ok(event) = event_rx.recv().await {
             match serde_json::to_string(&event) {
                 Ok(json) => {
@@ -60,7 +60,7 @@ async fn handle_socket(socket: WebSocket, runtime: Arc<WorkerRuntime>) {
 
     // Receive client commands from the WebSocket
     let recv_runtime = runtime.clone();
-    let recv_task = tokio::spawn(async move {
+    let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = receiver.next().await {
             match msg {
                 Message::Text(text) => {
@@ -72,9 +72,15 @@ async fn handle_socket(socket: WebSocket, runtime: Arc<WorkerRuntime>) {
         }
     });
 
+    // When one task finishes (e.g. client disconnect), abort the other so
+    // the spawned task does not keep running after the socket is gone.
     tokio::select! {
-        _ = send_task => {},
-        _ = recv_task => {},
+        _ = &mut send_task => {
+            recv_task.abort();
+        },
+        _ = &mut recv_task => {
+            send_task.abort();
+        },
     }
 }
 

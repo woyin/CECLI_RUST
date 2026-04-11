@@ -55,15 +55,34 @@ impl RateLimiter {
     pub fn remaining(&self, key: &str) -> usize {
         let now = Instant::now();
         let mut entries = self.entries.lock().unwrap();
-        let timestamps = entries.entry(key.to_string()).or_default();
-        timestamps.retain(|t| now.duration_since(*t) < self.window);
-        self.max_requests.saturating_sub(timestamps.len())
+        if let Some(timestamps) = entries.get_mut(key) {
+            timestamps.retain(|t| now.duration_since(*t) < self.window);
+            if timestamps.is_empty() {
+                entries.remove(key);
+                return self.max_requests;
+            }
+            self.max_requests.saturating_sub(timestamps.len())
+        } else {
+            self.max_requests
+        }
     }
 
     /// 清除指定 key 的所有记录
     pub fn reset(&self, key: &str) {
         let mut entries = self.entries.lock().unwrap();
         entries.remove(key);
+    }
+
+    /// 清除所有窗口外已过期且无活跃记录的 key，返回清理数量
+    pub fn cleanup(&self) -> usize {
+        let now = Instant::now();
+        let mut entries = self.entries.lock().unwrap();
+        let before = entries.len();
+        entries.retain(|_, timestamps| {
+            timestamps.retain(|t| now.duration_since(*t) < self.window);
+            !timestamps.is_empty()
+        });
+        before - entries.len()
     }
 }
 
