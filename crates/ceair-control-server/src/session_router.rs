@@ -27,7 +27,12 @@ impl SessionRouter {
         if let Some(worker_id) = self.registry.select_worker() {
             self.routes
                 .insert(session_id.to_string(), worker_id.clone());
-            self.registry.increment_session_count(&worker_id);
+            // Worker may have been removed between select and increment;
+            // roll back the route to avoid routing to a dead worker.
+            if !self.registry.increment_session_count(&worker_id) {
+                self.routes.remove(session_id);
+                return None;
+            }
             Some(worker_id)
         } else {
             None

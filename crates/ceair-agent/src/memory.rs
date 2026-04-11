@@ -196,7 +196,7 @@ impl MemoryStore {
         // 超过最大条目数时淘汰最不重要的
         if self.entries.len() > self.config.max_entries {
             self.entries
-                .sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap());
+                .sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap_or(std::cmp::Ordering::Equal));
             self.entries.truncate(self.config.max_entries);
         }
 
@@ -276,7 +276,7 @@ impl MemoryStore {
             return Vec::new();
         }
         let mut sorted: Vec<&MemoryEntry> = self.entries.iter().collect();
-        sorted.sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap());
+        sorted.sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap_or(std::cmp::Ordering::Equal));
         sorted.into_iter().take(limit).collect()
     }
 
@@ -301,7 +301,7 @@ impl MemoryStore {
         // 超出限制时淘汰低重要性条目
         if self.entries.len() > self.config.max_entries {
             self.entries
-                .sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap());
+                .sort_by(|a, b| b.importance.partial_cmp(&a.importance).unwrap_or(std::cmp::Ordering::Equal));
             self.entries.truncate(self.config.max_entries);
         }
     }

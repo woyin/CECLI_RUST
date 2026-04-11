@@ -179,7 +179,7 @@ impl ToolUsageSummary {
                 (name.clone(), fail_rate)
             })
             .collect();
-        tools.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        tools.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         tools
     }
 
