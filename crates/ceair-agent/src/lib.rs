@@ -91,6 +91,9 @@ pub mod message_group;
 /// 会话记忆（短期记忆）
 pub mod session_memory;
 
+/// 自动压缩触发器与断路器
+pub mod auto_compact;
+
 /// 代理管道模块
 pub mod pipeline;
 
