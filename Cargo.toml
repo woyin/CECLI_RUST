@@ -11,6 +11,9 @@ members = [
     "crates/ceair-mcp",
     "crates/ceair-cli",
     "crates/ceair-session",
+    "crates/ceair-control-protocol",
+    "crates/ceair-control-server",
+    "crates/ceair-worker",
 ]
 resolver = "2"
 
@@ -62,3 +65,10 @@ ceair-audit = { path = "crates/ceair-audit" }
 ceair-tui = { path = "crates/ceair-tui" }
 ceair-mcp = { path = "crates/ceair-mcp" }
 ceair-session = { path = "crates/ceair-session" }
+axum = { version = "0.7", features = ["ws"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+ceair-control-protocol = { path = "crates/ceair-control-protocol" }
+ceair-control-server = { path = "crates/ceair-control-server" }
+ceair-worker = { path = "crates/ceair-worker" }

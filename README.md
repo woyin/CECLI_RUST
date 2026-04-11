@@ -6,7 +6,7 @@
 
 | 指标 | 数值 |
 |------|------|
-| **Crates** | 11 个工作空间成员 |
+| **Crates** | 14 个工作空间成员 |
 | **源文件** | 120+ 个 .rs 文件 |
 | **代码行数** | ~55,000 行 |
 | **测试数量** | 1,254 个单元测试 |
@@ -28,6 +28,9 @@
 | **ceair-mcp** | MCP 协议 | JSON-RPC 2.0、stdio/SSE 传输 |
 | **ceair-tui** | 终端界面 | Markdown 渲染、主题系统、会话选择器 |
 | **ceair-cli** | 命令行 | 斜杠命令、RPC 模式、OAuth 认证、Zellij/Tmux 集成 |
+| **ceair-control-protocol** | 控制协议 | 浏览器/服务器/Worker 共用消息类型、会话/审批/事件模型 |
+| **ceair-control-server** | 控制服务 | HTTP API、WebSocket、本地令牌鉴权、流式事件分发 |
+| **ceair-worker** | Worker 运行时 | Agent 生命周期管理、审批桥接、事件转换 |
 
 ## 🤖 专业 Agent 系统（11 个）
 

@@ -21,6 +21,10 @@ ceair-config = { workspace = true }
 ceair-audit = { workspace = true }
 ceair-tui = { workspace = true }
 ceair-mcp = { workspace = true }
+ceair-control-server = { workspace = true }
+ceair-worker = { workspace = true }
+async-trait = { workspace = true }
+tokio-util = { workspace = true }
 clap = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

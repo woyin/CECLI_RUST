@@ -53,6 +53,9 @@ enum Commands {
     /// 显示系统状态（配置、提供商、工具等）
     Status(commands::status::StatusArgs),
 
+    /// 启动本地 Web 控制服务器（HTTP + WebSocket）
+    Serve(commands::serve::ServeArgs),
+
     /// 显示版本信息
     Version,
 }
@@ -166,6 +169,9 @@ async fn dispatch_command(
         }
         Commands::Status(args) => {
             commands::status::execute(args, config).await
+        }
+        Commands::Serve(args) => {
+            commands::serve::execute(args, config).await
         }
         Commands::Version => {
             print_version();
