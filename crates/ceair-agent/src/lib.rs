@@ -97,6 +97,9 @@ pub mod auto_compact;
 /// AutoDream 门控与锁
 pub mod auto_dream;
 
+/// 压缩后重注入
+pub mod reinjection;
+
 /// 代理管道模块
 pub mod pipeline;
 
