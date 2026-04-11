@@ -106,6 +106,9 @@ pub mod fork;
 /// Agent 邮箱通信
 pub mod mailbox;
 
+/// Markdown + Frontmatter 记忆存储
+pub mod memdir;
+
 /// 代理管道模块
 pub mod pipeline;
 
