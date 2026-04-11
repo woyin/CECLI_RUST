@@ -67,6 +67,9 @@ pub mod memory;
 /// Token 预算状态机模块
 pub mod token_budget;
 
+/// 任务系统模块 — 任务 ID、状态机、注册表
+pub mod task_system;
+
 /// 代理管道模块
 pub mod pipeline;
 
