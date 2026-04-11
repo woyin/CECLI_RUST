@@ -185,11 +185,12 @@ impl OutputTruncationHook {
 impl PostToolHook for OutputTruncationHook {
     fn on_tool_complete(&self, ctx: &HookContext) -> HookResult {
         if ctx.output.len() > self.max_chars {
+            let truncated: String = ctx.output.chars().take(self.max_chars).collect();
             let truncated = format!(
                 "{}...\n[输出已截断: {} -> {} 字符]",
-                &ctx.output[..self.max_chars],
+                truncated,
                 ctx.output.len(),
-                self.max_chars
+                truncated.chars().count()
             );
             HookResult::ModifyOutput(truncated)
         } else {
@@ -287,10 +288,7 @@ mod tests {
         pipeline.add_hook(BlockerHook);
         let mut ctx = make_ctx("test", "success", 100);
         let result = pipeline.run(&mut ctx);
-        assert_eq!(
-            result,
-            HookResult::BlockingError("审计不通过".into())
-        );
+        assert_eq!(result, HookResult::BlockingError("审计不通过".into()));
     }
 
     // --- 多钩子顺序执行测试 ---
@@ -389,5 +387,83 @@ mod tests {
         pipeline.add_hook(NoopHook);
         assert_eq!(pipeline.len(), 2);
         assert!(!pipeline.is_empty());
+    }
+
+    // --- BUG-003: UTF-8 安全截断测试 ---
+
+    /// 测试中文输出截断不会 panic
+    ///
+    /// "你好世界" = 4 个中文字符 = 12 字节 (UTF-8)
+    /// max_chars = 5 时，字节切片 [..5] 会切断第二个中文字符，
+    /// 导致 panic。修复后应在字符边界安全截断。
+    #[test]
+    fn test_truncation_chinese_output_no_panic() {
+        let hook = OutputTruncationHook::new(5);
+        let ctx = make_ctx("bash", "你好世界，这是一段很长的中文输出", 100);
+        // 当前实现会 panic — 修复后应正常返回
+        let result = hook.on_tool_complete(&ctx);
+        match result {
+            HookResult::ModifyOutput(s) => {
+                // 截断后的内容不应包含残缺的 UTF-8 字符
+                assert!(s.contains("你好"));
+                assert!(s.contains("[输出已截断"));
+            }
+            HookResult::Continue => {
+                // 如果输出足够短，不应触发截断
+            }
+            other => panic!("Expected ModifyOutput or Continue, got {:?}", other),
+        }
+    }
+
+    /// 测试 emoji 输出截断不会 panic
+    ///
+    /// "🎉🎊🎁" = 3 个 emoji = 12 字节 (UTF-8，每个 emoji 4 字节)
+    /// max_chars = 5 时，字节切片 [..5] 会切断第二个 emoji。
+    #[test]
+    fn test_truncation_emoji_output_no_panic() {
+        let hook = OutputTruncationHook::new(5);
+        let ctx = make_ctx("bash", "🎉🎊🎁🎈🎂🎃🎄🎅🔔🎇", 100);
+        let result = hook.on_tool_complete(&ctx);
+        match result {
+            HookResult::ModifyOutput(s) => {
+                assert!(s.contains("🎉"));
+                assert!(s.contains("[输出已截断"));
+            }
+            HookResult::Continue => {}
+            other => panic!("Expected ModifyOutput or Continue, got {:?}", other),
+        }
+    }
+
+    /// 测试混合 ASCII 和中文的截断
+    #[test]
+    fn test_truncation_mixed_ascii_cjk() {
+        let hook = OutputTruncationHook::new(7);
+        // "Hello你好" = 5 ASCII + 6 CJK bytes = 11 bytes total, 7 chars
+        // max_chars=7 bytes 会切断 "你" (3-byte CJK char starting at byte 5)
+        let ctx = make_ctx("test", "Hello你好World世界", 100);
+        let result = hook.on_tool_complete(&ctx);
+        match result {
+            HookResult::ModifyOutput(s) => {
+                assert!(s.contains("Hello"));
+                assert!(s.contains("[输出已截断"));
+            }
+            HookResult::Continue => {}
+            other => panic!("Expected ModifyOutput or Continue, got {:?}", other),
+        }
+    }
+
+    /// 测试纯 ASCII 截断行为不变
+    #[test]
+    fn test_truncation_ascii_unchanged() {
+        let hook = OutputTruncationHook::new(10);
+        let ctx = make_ctx("test", "this is a very long output string", 100);
+        let result = hook.on_tool_complete(&ctx);
+        match result {
+            HookResult::ModifyOutput(s) => {
+                assert!(s.starts_with("this is a "));
+                assert!(s.contains("[输出已截断"));
+            }
+            other => panic!("Expected ModifyOutput, got {:?}", other),
+        }
     }
 }
