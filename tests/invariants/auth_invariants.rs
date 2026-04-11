@@ -10,6 +10,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use ceair_control_server::auth::LocalAuth;
 use ceair_control_server::routes::build_router;
+use ceair_control_server::worker_registry::WorkerRegistry;
 use ceair_control_server::ws::WsQuery;
 use ceair_worker::WorkerRuntime;
 use tower::ServiceExt;
@@ -17,7 +18,8 @@ use tower::ServiceExt;
 fn setup() -> (axum::Router, LocalAuth, Arc<WorkerRuntime>) {
     let runtime = Arc::new(WorkerRuntime::new());
     let auth = LocalAuth::generate();
-    let router = build_router(runtime.clone(), auth.clone());
+    let registry = Arc::new(WorkerRegistry::new());
+    let router = build_router(runtime.clone(), auth.clone(), registry);
     (router, auth, runtime)
 }
 

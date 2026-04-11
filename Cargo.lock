@@ -414,6 +414,7 @@ dependencies = [
  "ceair-core",
  "ceair-worker",
  "chrono",
+ "dashmap",
  "futures",
  "serde",
  "serde_json",

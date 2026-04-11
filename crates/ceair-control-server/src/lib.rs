@@ -2,6 +2,9 @@ pub mod approval_api;
 pub mod auth;
 pub mod routes;
 pub mod session_api;
+pub mod session_router;
+pub mod worker_api;
+pub mod worker_registry;
 pub mod ws;
 
 use std::net::SocketAddr;
@@ -11,6 +14,7 @@ use ceair_worker::WorkerRuntime;
 use tokio::net::TcpListener;
 
 use crate::auth::LocalAuth;
+use crate::worker_registry::WorkerRegistry;
 
 pub struct ControlServerConfig {
     pub bind_addr: SocketAddr,
@@ -31,7 +35,8 @@ pub async fn start_server(
 ) -> anyhow::Result<String> {
     let auth = LocalAuth::generate();
     let token = auth.token().to_string();
-    let app = routes::build_router(runtime, auth);
+    let registry = Arc::new(WorkerRegistry::new());
+    let app = routes::build_router(runtime, auth, registry);
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!("Control server listening on {}", config.bind_addr);
     tokio::spawn(async move {

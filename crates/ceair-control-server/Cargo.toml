@@ -24,8 +24,10 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 futures = { workspace = true }
 anyhow = { workspace = true }
+dashmap = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "macros"] }
 tower = { workspace = true, features = ["util"] }
 serde_json = { workspace = true }
+chrono = { workspace = true }

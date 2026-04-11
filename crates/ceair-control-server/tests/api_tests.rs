@@ -9,14 +9,17 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use ceair_control_server::auth::LocalAuth;
 use ceair_control_server::routes::build_router;
+use ceair_control_server::worker_registry::{WorkerInfo, WorkerRegistry, WorkerStatus};
 use ceair_worker::WorkerRuntime;
+use chrono::Utc;
 use tower::ServiceExt;
 
-fn setup() -> (axum::Router, LocalAuth, Arc<WorkerRuntime>) {
+fn setup() -> (axum::Router, LocalAuth, Arc<WorkerRuntime>, Arc<WorkerRegistry>) {
     let runtime = Arc::new(WorkerRuntime::new());
     let auth = LocalAuth::generate();
-    let router = build_router(runtime.clone(), auth.clone());
-    (router, auth, runtime)
+    let registry = Arc::new(WorkerRegistry::new());
+    let router = build_router(runtime.clone(), auth.clone(), registry.clone());
+    (router, auth, runtime, registry)
 }
 
 fn authed_get(path: &str, token: &str) -> Request<Body> {
@@ -46,11 +49,24 @@ fn authed_delete(path: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
+fn make_worker(id: &str) -> WorkerInfo {
+    let now = Utc::now();
+    WorkerInfo {
+        worker_id: id.to_string(),
+        version: "1.0.0".to_string(),
+        connected_at: now,
+        last_heartbeat: now,
+        status: WorkerStatus::Online,
+        session_count: 0,
+        capabilities: vec![],
+    }
+}
+
 // ---- Health endpoint ----
 
 #[tokio::test]
 async fn health_returns_ok() {
-    let (app, _, _) = setup();
+    let (app, _, _, _) = setup();
     let req = Request::builder()
         .uri("/health")
         .body(Body::empty())
@@ -64,7 +80,7 @@ async fn health_returns_ok() {
 
 #[tokio::test]
 async fn unauthenticated_request_returns_401() {
-    let (app, _, _) = setup();
+    let (app, _, _, _) = setup();
     let req = Request::builder()
         .uri("/api/v1/sessions")
         .body(Body::empty())
@@ -76,7 +92,7 @@ async fn unauthenticated_request_returns_401() {
 
 #[tokio::test]
 async fn wrong_token_returns_401() {
-    let (app, _, _) = setup();
+    let (app, _, _, _) = setup();
     let req = authed_get("/api/v1/sessions", "wrong-token");
 
     let resp = app.oneshot(req).await.unwrap();
@@ -87,7 +103,7 @@ async fn wrong_token_returns_401() {
 
 #[tokio::test]
 async fn list_sessions_empty() {
-    let (app, auth, _) = setup();
+    let (app, auth, _, _) = setup();
     let req = authed_get("/api/v1/sessions", auth.token());
 
     let resp = app.oneshot(req).await.unwrap();
@@ -100,14 +116,14 @@ async fn list_sessions_empty() {
 
 #[tokio::test]
 async fn create_and_get_session() {
-    let (_app, auth, runtime) = setup();
+    let (_app, auth, runtime, registry) = setup();
 
     // Create a session directly via runtime (avoids oneshot issues)
     let info = runtime.sessions.create_session(Some("test session".into()), None);
     let session_id = info.id.clone();
 
     // Rebuild router for GET (oneshot consumes the service)
-    let app = build_router(runtime.clone(), auth.clone());
+    let app = build_router(runtime.clone(), auth.clone(), registry);
     let get_req = authed_get(
         &format!("/api/v1/sessions/{}", session_id),
         auth.token(),
@@ -120,7 +136,7 @@ async fn create_and_get_session() {
     assert_eq!(session["title"].as_str().unwrap(), "test session");
 
     // List sessions should have 1
-    let app = build_router(runtime.clone(), auth.clone());
+    let app = build_router(runtime.clone(), auth.clone(), Arc::new(WorkerRegistry::new()));
     let list_req = authed_get("/api/v1/sessions", auth.token());
     let resp = app.oneshot(list_req).await.unwrap();
     let body = axum::body::to_bytes(resp.into_body(), 1_000_000).await.unwrap();
@@ -130,7 +146,7 @@ async fn create_and_get_session() {
 
 #[tokio::test]
 async fn create_session_via_api() {
-    let (app, auth, runtime) = setup();
+    let (app, auth, runtime, _) = setup();
 
     let create_req = authed_post(
         "/api/v1/sessions",
@@ -151,7 +167,7 @@ async fn create_session_via_api() {
 
 #[tokio::test]
 async fn get_nonexistent_session_returns_404() {
-    let (app, auth, _) = setup();
+    let (app, auth, _, _) = setup();
     let req = authed_get("/api/v1/sessions/nonexistent", auth.token());
 
     let resp = app.oneshot(req).await.unwrap();
@@ -160,14 +176,14 @@ async fn get_nonexistent_session_returns_404() {
 
 #[tokio::test]
 async fn cancel_session() {
-    let (_app, auth, runtime) = setup();
+    let (_app, auth, runtime, registry) = setup();
 
     // Create a session directly
     let info = runtime.sessions.create_session(Some("cancel me".into()), None);
     let session_id = info.id.clone();
 
     // Cancel it via API
-    let app = build_router(runtime.clone(), auth.clone());
+    let app = build_router(runtime.clone(), auth.clone(), registry);
     let cancel_req = authed_post(
         &format!("/api/v1/sessions/{}/cancel", session_id),
         auth.token(),
@@ -179,14 +195,14 @@ async fn cancel_session() {
 
 #[tokio::test]
 async fn close_session() {
-    let (_app, auth, runtime) = setup();
+    let (_app, auth, runtime, registry) = setup();
 
     // Create a session directly
     let info = runtime.sessions.create_session(Some("close me".into()), None);
     let session_id = info.id.clone();
 
     // Close it via API
-    let app = build_router(runtime.clone(), auth.clone());
+    let app = build_router(runtime.clone(), auth.clone(), registry);
     let delete_req = authed_delete(
         &format!("/api/v1/sessions/{}", session_id),
         auth.token(),
@@ -196,4 +212,86 @@ async fn close_session() {
 
     // Should be gone
     assert!(runtime.sessions.get_session(&session_id).is_none());
+}
+
+// ---- Worker API ----
+
+#[tokio::test]
+async fn list_workers_empty() {
+    let (app, auth, _, _) = setup();
+    let req = authed_get("/api/v1/workers", auth.token());
+
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), 1_000_000).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["workers"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_workers_with_entries() {
+    let (_app, auth, runtime, registry) = setup();
+    registry.register(make_worker("w-1"));
+    registry.register(make_worker("w-2"));
+
+    let app = build_router(runtime, auth.clone(), registry);
+    let req = authed_get("/api/v1/workers", auth.token());
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), 1_000_000).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["workers"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn get_worker_found() {
+    let (_app, auth, runtime, registry) = setup();
+    registry.register(make_worker("w-1"));
+
+    let app = build_router(runtime, auth.clone(), registry);
+    let req = authed_get("/api/v1/workers/w-1", auth.token());
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), 1_000_000).await.unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["worker_id"].as_str().unwrap(), "w-1");
+}
+
+#[tokio::test]
+async fn get_worker_not_found() {
+    let (app, auth, _, _) = setup();
+    let req = authed_get("/api/v1/workers/nonexistent", auth.token());
+
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn drain_worker_api() {
+    let (_app, auth, runtime, registry) = setup();
+    registry.register(make_worker("w-1"));
+
+    let app = build_router(runtime, auth.clone(), registry.clone());
+    let req = authed_post("/api/v1/workers/w-1/drain", auth.token(), "{}");
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    assert_eq!(registry.get("w-1").unwrap().status, WorkerStatus::Draining);
+}
+
+#[tokio::test]
+async fn revoke_worker_api() {
+    let (_app, auth, runtime, registry) = setup();
+    registry.register(make_worker("w-1"));
+    assert_eq!(registry.worker_count(), 1);
+
+    let app = build_router(runtime, auth.clone(), registry.clone());
+    let req = authed_post("/api/v1/workers/w-1/revoke", auth.token(), "{}");
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    assert_eq!(registry.worker_count(), 0);
 }
