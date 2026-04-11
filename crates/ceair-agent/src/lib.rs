@@ -64,6 +64,9 @@ pub mod ttsr;
 /// 记忆系统模块
 pub mod memory;
 
+/// Token 预算状态机模块
+pub mod token_budget;
+
 /// 代理管道模块
 pub mod pipeline;
 
