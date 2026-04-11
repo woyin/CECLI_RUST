@@ -85,6 +85,9 @@ pub mod tool_summary;
 /// 取消令牌层级系统
 pub mod cancellation;
 
+/// 消息分组模块 — 按 API 轮次分组
+pub mod message_group;
+
 /// 代理管道模块
 pub mod pipeline;
 
