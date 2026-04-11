@@ -109,6 +109,9 @@ pub mod mailbox;
 /// Markdown + Frontmatter 记忆存储
 pub mod memdir;
 
+/// MEMORY.md 索引文件
+pub mod memory_index;
+
 /// 代理管道模块
 pub mod pipeline;
 
