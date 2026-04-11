@@ -204,6 +204,95 @@ pub trait Tool: Send + Sync + fmt::Debug {
     /// - 成功时返回工具执行结果的字符串表示
     /// - 失败时返回 `ToolError`
     async fn execute(&self, params: Value) -> ToolResult<String>;
+
+    /// 验证输入参数是否符合 parameters_schema
+    ///
+    /// 默认实现检查：
+    /// 1. 参数是否为 JSON 对象
+    /// 2. required 字段是否都存在
+    /// 3. 已提供的字段类型是否匹配 schema
+    ///
+    /// 工具实现者可覆盖此方法添加自定义校验逻辑。
+    fn validate_input(&self, params: &Value) -> ToolResult<()> {
+        validate_params_against_schema(params, &self.parameters_schema())
+    }
+}
+
+// ============================================================
+// 输入验证
+// ============================================================
+
+/// 基于 JSON Schema 的参数验证
+///
+/// 为什么不使用完整的 JSON Schema 验证库：
+/// - Agent 工具的 schema 简单（object + properties + required）
+/// - 避免引入重量级依赖
+/// - 保持验证逻辑可读可调试
+fn validate_params_against_schema(params: &Value, schema: &Value) -> ToolResult<()> {
+    // 1. 参数必须是对象
+    let params_obj = params.as_object().ok_or_else(|| {
+        ToolError::InvalidParams("参数必须是 JSON 对象".to_string())
+    })?;
+
+    // 2. 检查 required 字段
+    if let Some(required) = schema.get("required").and_then(|r| r.as_array()) {
+        for field in required {
+            if let Some(name) = field.as_str() {
+                if !params_obj.contains_key(name) {
+                    return Err(ToolError::InvalidParams(format!(
+                        "缺少必需参数: {}",
+                        name
+                    )));
+                }
+            }
+        }
+    }
+
+    // 3. 检查已提供字段的类型匹配
+    if let Some(properties) = schema.get("properties").and_then(|p| p.as_object()) {
+        for (key, value) in params_obj {
+            if let Some(prop_schema) = properties.get(key) {
+                if let Some(expected_type) = prop_schema.get("type").and_then(|t| t.as_str()) {
+                    if !value_matches_type(value, expected_type) {
+                        return Err(ToolError::InvalidParams(format!(
+                            "参数 '{}' 类型不匹配: 期望 {}, 实际 {}",
+                            key,
+                            expected_type,
+                            json_type_name(value)
+                        )));
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// 检查 JSON 值是否匹配指定类型
+fn value_matches_type(value: &Value, expected: &str) -> bool {
+    match expected {
+        "string" => value.is_string(),
+        "number" => value.is_number(),
+        "integer" => value.is_i64() || value.is_u64(),
+        "boolean" => value.is_boolean(),
+        "array" => value.is_array(),
+        "object" => value.is_object(),
+        "null" => value.is_null(),
+        _ => true, // 未知类型默认通过
+    }
+}
+
+/// 获取 JSON 值的类型名称
+fn json_type_name(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "null",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
+    }
 }
 
 // ============================================================
@@ -437,5 +526,130 @@ mod tests {
         // metadata() 使用默认实现
         let meta = tool.metadata();
         assert_eq!(meta, ToolMetadata::default());
+    }
+
+    // ================================================================
+    // validate_input 测试
+    // ================================================================
+
+    /// 测试合法参数通过验证
+    #[test]
+    fn test_validate_input_valid() {
+        let tool = MockTool;
+        let params = json!({"message": "hello"});
+        assert!(tool.validate_input(&params).is_ok());
+    }
+
+    /// 测试缺少必需参数
+    #[test]
+    fn test_validate_input_missing_required() {
+        let tool = MockTool;
+        let params = json!({});
+        let err = tool.validate_input(&params).unwrap_err();
+        match err {
+            ToolError::InvalidParams(msg) => {
+                assert!(msg.contains("message"), "应提示缺少 message: {}", msg);
+            }
+            other => panic!("期望 InvalidParams，得到 {:?}", other),
+        }
+    }
+
+    /// 测试非对象参数被拒绝
+    #[test]
+    fn test_validate_input_not_object() {
+        let tool = MockTool;
+        let params = json!("string input");
+        let err = tool.validate_input(&params).unwrap_err();
+        match err {
+            ToolError::InvalidParams(msg) => {
+                assert!(msg.contains("JSON 对象"), "应提示必须是对象: {}", msg);
+            }
+            other => panic!("期望 InvalidParams，得到 {:?}", other),
+        }
+    }
+
+    /// 测试类型不匹配
+    #[test]
+    fn test_validate_input_type_mismatch() {
+        let tool = MockTool;
+        let params = json!({"message": 123}); // 应为 string
+        let err = tool.validate_input(&params).unwrap_err();
+        match err {
+            ToolError::InvalidParams(msg) => {
+                assert!(msg.contains("类型不匹配"), "应提示类型不匹配: {}", msg);
+            }
+            other => panic!("期望 InvalidParams，得到 {:?}", other),
+        }
+    }
+
+    /// 测试额外字段不影响验证（schema 无 additionalProperties 限制）
+    #[test]
+    fn test_validate_input_extra_fields() {
+        let tool = MockTool;
+        let params = json!({"message": "ok", "extra": 42});
+        assert!(tool.validate_input(&params).is_ok());
+    }
+
+    /// 测试无 required 字段的 schema
+    #[test]
+    fn test_validate_input_no_required() {
+        let schema = json!({"type": "object", "properties": {"x": {"type": "number"}}});
+        let params = json!({});
+        assert!(validate_params_against_schema(&params, &schema).is_ok());
+    }
+
+    /// 测试所有 JSON 类型匹配
+    #[test]
+    fn test_value_matches_type_all() {
+        assert!(value_matches_type(&json!("hi"), "string"));
+        assert!(value_matches_type(&json!(42), "number"));
+        assert!(value_matches_type(&json!(42), "integer"));
+        assert!(value_matches_type(&json!(true), "boolean"));
+        assert!(value_matches_type(&json!([1, 2]), "array"));
+        assert!(value_matches_type(&json!({}), "object"));
+        assert!(value_matches_type(&json!(null), "null"));
+
+        // 不匹配的情况
+        assert!(!value_matches_type(&json!("hi"), "number"));
+        assert!(!value_matches_type(&json!(42), "string"));
+        assert!(!value_matches_type(&json!(true), "string"));
+    }
+
+    /// 测试未知类型默认通过
+    #[test]
+    fn test_value_matches_unknown_type() {
+        assert!(value_matches_type(&json!("anything"), "custom_type"));
+    }
+
+    /// 测试 json_type_name 覆盖所有类型
+    #[test]
+    fn test_json_type_name_all() {
+        assert_eq!(json_type_name(&json!(null)), "null");
+        assert_eq!(json_type_name(&json!(true)), "boolean");
+        assert_eq!(json_type_name(&json!(42)), "number");
+        assert_eq!(json_type_name(&json!("hi")), "string");
+        assert_eq!(json_type_name(&json!([1])), "array");
+        assert_eq!(json_type_name(&json!({})), "object");
+    }
+
+    /// 测试空对象参数对无 required schema 通过
+    #[test]
+    fn test_validate_empty_params_no_required() {
+        let schema = json!({"type": "object", "properties": {}});
+        assert!(validate_params_against_schema(&json!({}), &schema).is_ok());
+    }
+
+    /// 测试 null 参数被拒绝
+    #[test]
+    fn test_validate_null_params() {
+        let schema = json!({"type": "object"});
+        assert!(validate_params_against_schema(&json!(null), &schema).is_err());
+    }
+
+    /// 测试 array 参数被拒绝
+    #[test]
+    fn test_validate_array_params() {
+        let schema = json!({"type": "object"});
+        assert!(validate_params_against_schema(&json!([1, 2, 3]), &schema).is_err());
     }
 }
