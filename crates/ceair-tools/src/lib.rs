@@ -93,6 +93,74 @@ pub enum ToolError {
 pub type ToolResult<T> = Result<T, ToolError>;
 
 // ============================================================
+// 工具元数据
+// ============================================================
+
+/// 工具元数据 — 描述工具的行为特性，用于执行调度和安全决策
+///
+/// 采用 TOOL_DEFAULTS 模式：所有字段提供安全的默认值，
+/// 工具实现者只需覆盖需要修改的字段。
+///
+/// # 设计思想
+/// 参考 reference 中 buildTool() 的 TOOL_DEFAULTS 模式：
+/// - 默认不允许并发（防止竞态）
+/// - 默认非只读（保守安全策略）
+/// - 默认非破坏性
+/// - 默认启用
+/// 工具实现者通过覆盖特定字段来声明实际行为。
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ToolMetadata {
+    /// 工具是否为只读操作（不修改任何文件或状态）
+    /// 只读工具可以安全地并发执行和在沙箱中运行
+    pub is_read_only: bool,
+
+    /// 工具是否可以安全地与其他工具并发执行
+    /// 为 true 时，批量执行器会将其放入并发组
+    pub is_concurrency_safe: bool,
+
+    /// 工具是否具有破坏性（如删除文件、执行危险命令）
+    /// 破坏性工具在执行前需要额外的权限确认
+    pub is_destructive: bool,
+
+    /// 工具是否当前可用
+    /// 为 false 时工具不会出现在可用工具列表中
+    pub is_enabled: bool,
+}
+
+/// 安全的默认值：保守策略，最小权限原则
+impl Default for ToolMetadata {
+    fn default() -> Self {
+        Self {
+            is_read_only: false,
+            is_concurrency_safe: false,
+            is_destructive: false,
+            is_enabled: true,
+        }
+    }
+}
+
+impl ToolMetadata {
+    /// 创建只读工具的元数据（自动标记为并发安全）
+    ///
+    /// 只读工具天然可以并发执行，因此同时设置 is_concurrency_safe
+    pub fn read_only() -> Self {
+        Self {
+            is_read_only: true,
+            is_concurrency_safe: true,
+            ..Default::default()
+        }
+    }
+
+    /// 创建破坏性工具的元数据
+    pub fn destructive() -> Self {
+        Self {
+            is_destructive: true,
+            ..Default::default()
+        }
+    }
+}
+
+// ============================================================
 // 工具特征定义
 // ============================================================
 
@@ -104,6 +172,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 /// - 功能描述（供 AI 理解工具用途）
 /// - 参数模式（JSON Schema 格式，用于 AI 函数调用）
 /// - 异步执行方法（接收 JSON 参数，返回字符串结果）
+/// - 可选的元数据方法（声明工具行为特性）
 #[async_trait]
 pub trait Tool: Send + Sync + fmt::Debug {
     /// 返回工具的唯一标识名称
@@ -117,6 +186,14 @@ pub trait Tool: Send + Sync + fmt::Debug {
     /// 该 Schema 遵循 JSON Schema 规范，用于 AI 函数调用时的参数校验。
     /// 返回值应包含 `type`、`properties`、`required` 等字段。
     fn parameters_schema(&self) -> Value;
+
+    /// 返回工具的行为元数据
+    ///
+    /// 默认返回安全的保守值。工具实现者可覆盖此方法
+    /// 来声明工具的实际行为特性（如只读、可并发等）。
+    fn metadata(&self) -> ToolMetadata {
+        ToolMetadata::default()
+    }
 
     /// 异步执行工具操作
     ///
@@ -232,5 +309,133 @@ mod tests {
 
         let err = ToolError::NotFound("unknown_tool".to_string());
         assert_eq!(format!("{}", err), "工具未找到: unknown_tool");
+    }
+
+    // -----------------------------------------------------------------------
+    // ToolMetadata 测试
+    // -----------------------------------------------------------------------
+
+    /// 测试 ToolMetadata 默认值 — 保守安全策略
+    #[test]
+    fn test_tool_metadata_defaults() {
+        let meta = ToolMetadata::default();
+
+        // 默认不允许并发、非只读、非破坏性、已启用
+        assert!(!meta.is_read_only, "默认不应为只读");
+        assert!(!meta.is_concurrency_safe, "默认不应允许并发");
+        assert!(!meta.is_destructive, "默认不应为破坏性");
+        assert!(meta.is_enabled, "默认应为启用");
+    }
+
+    /// 测试只读元数据快捷构造
+    #[test]
+    fn test_tool_metadata_read_only() {
+        let meta = ToolMetadata::read_only();
+
+        assert!(meta.is_read_only);
+        // 只读工具天然可以并发执行
+        assert!(meta.is_concurrency_safe);
+        assert!(!meta.is_destructive);
+        assert!(meta.is_enabled);
+    }
+
+    /// 测试破坏性元数据快捷构造
+    #[test]
+    fn test_tool_metadata_destructive() {
+        let meta = ToolMetadata::destructive();
+
+        assert!(meta.is_destructive);
+        assert!(!meta.is_read_only);
+        assert!(!meta.is_concurrency_safe);
+        assert!(meta.is_enabled);
+    }
+
+    /// 测试自定义覆盖所有字段
+    #[test]
+    fn test_tool_metadata_custom_override() {
+        let meta = ToolMetadata {
+            is_read_only: true,
+            is_concurrency_safe: true,
+            is_destructive: false,
+            is_enabled: false, // 显式禁用
+        };
+
+        assert!(meta.is_read_only);
+        assert!(meta.is_concurrency_safe);
+        assert!(!meta.is_destructive);
+        assert!(!meta.is_enabled);
+    }
+
+    /// 测试 ToolMetadata 的 PartialEq 实现
+    #[test]
+    fn test_tool_metadata_equality() {
+        let a = ToolMetadata::default();
+        let b = ToolMetadata::default();
+        assert_eq!(a, b);
+
+        let c = ToolMetadata::read_only();
+        assert_ne!(a, c);
+    }
+
+    /// 测试 Tool trait 默认的 metadata() 方法
+    #[tokio::test]
+    async fn test_tool_default_metadata() {
+        let tool = MockTool;
+
+        // MockTool 未覆盖 metadata()，应返回安全默认值
+        let meta = tool.metadata();
+        assert_eq!(meta, ToolMetadata::default());
+    }
+
+    /// 自定义元数据的模拟工具 — 验证覆盖生效
+    #[derive(Debug)]
+    struct ReadOnlyTool;
+
+    #[async_trait]
+    impl Tool for ReadOnlyTool {
+        fn name(&self) -> &str {
+            "read_only_tool"
+        }
+        fn description(&self) -> &str {
+            "只读测试工具"
+        }
+        fn parameters_schema(&self) -> Value {
+            json!({"type": "object", "properties": {}})
+        }
+        fn metadata(&self) -> ToolMetadata {
+            ToolMetadata::read_only()
+        }
+        async fn execute(&self, _params: Value) -> ToolResult<String> {
+            Ok("只读结果".to_string())
+        }
+    }
+
+    /// 测试覆盖 metadata() 方法后返回自定义值
+    #[tokio::test]
+    async fn test_tool_custom_metadata() {
+        let tool = ReadOnlyTool;
+        let meta = tool.metadata();
+
+        assert!(meta.is_read_only);
+        assert!(meta.is_concurrency_safe);
+        assert!(!meta.is_destructive);
+        assert!(meta.is_enabled);
+    }
+
+    /// 测试现有工具（MockTool）无需修改即可编译和使用
+    #[tokio::test]
+    async fn test_existing_tool_backward_compatible() {
+        let tool = MockTool;
+
+        // 所有原有方法依然可用
+        assert_eq!(tool.name(), "mock_tool");
+        assert_eq!(tool.description(), "这是一个用于单元测试的模拟工具");
+
+        let result = tool.execute(json!({"message": "兼容性测试"})).await;
+        assert!(result.is_ok());
+
+        // metadata() 使用默认实现
+        let meta = tool.metadata();
+        assert_eq!(meta, ToolMetadata::default());
     }
 }
