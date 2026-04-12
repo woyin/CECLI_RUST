@@ -8,8 +8,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use ceair_tools::permissions::{PermissionContext, PermissionDecision};
-use ceair_tools::{Tool, ToolError, ToolMetadata, ToolResult};
+use chengcoding_tools::permissions::{PermissionContext, PermissionDecision};
+use chengcoding_tools::{Tool, ToolError, ToolMetadata, ToolResult};
 use serde_json::{json, Value};
 
 // =========================================================================

@@ -1,36 +1,36 @@
 [workspace]
 members = [
-    "crates/ceair-core",
-    "crates/ceair-agent",
-    "crates/ceair-tools",
-    "crates/ceair-ai",
-    "crates/ceair-mesh",
-    "crates/ceair-config",
-    "crates/ceair-audit",
-    "crates/ceair-tui",
-    "crates/ceair-mcp",
-    "crates/ceair-cli",
-    "crates/ceair-session",
-    "crates/ceair-control-protocol",
-    "crates/ceair-control-server",
-    "crates/ceair-worker",
-    "crates/ceair-invariant",
+    "crates/chengcoding-core",
+    "crates/chengcoding-agent",
+    "crates/chengcoding-tools",
+    "crates/chengcoding-ai",
+    "crates/chengcoding-mesh",
+    "crates/chengcoding-config",
+    "crates/chengcoding-audit",
+    "crates/chengcoding-tui",
+    "crates/chengcoding-mcp",
+    "crates/chengcoding-cli",
+    "crates/chengcoding-session",
+    "crates/chengcoding-control-protocol",
+    "crates/chengcoding-control-server",
+    "crates/chengcoding-worker",
+    "crates/chengcoding-invariant",
 ]
 resolver = "2"
 
 [package]
-name = "ceair-workspace-tests"
+name = "chengcoding-workspace-tests"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
 [dev-dependencies]
-ceair-core = { workspace = true }
-ceair-agent = { workspace = true }
-ceair-tools = { workspace = true }
-ceair-control-protocol = { workspace = true }
-ceair-control-server = { workspace = true }
-ceair-worker = { workspace = true }
+chengcoding-core = { workspace = true }
+chengcoding-agent = { workspace = true }
+chengcoding-tools = { workspace = true }
+chengcoding-control-protocol = { workspace = true }
+chengcoding-control-server = { workspace = true }
+chengcoding-worker = { workspace = true }
 tokio = { workspace = true }
 tower = { workspace = true }
 axum = { workspace = true }
@@ -65,9 +65,9 @@ path = "tests/invariants/event_invariants.rs"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["CEAIR Team"]
+authors = ["ChengCoding Team"]
 license = "Apache-2.0"
-repository = "https://github.com/woyin/ceair_cli"
+repository = "https://github.com/woyin/chengcoding_cli"
 rust-version = "1.75"
 
 [workspace.dependencies]
@@ -100,20 +100,20 @@ url = "2.5"
 config = "0.14"
 mockall = "0.12"
 tempfile = "3.9"
-ceair-core = { path = "crates/ceair-core" }
-ceair-agent = { path = "crates/ceair-agent" }
-ceair-tools = { path = "crates/ceair-tools" }
-ceair-ai = { path = "crates/ceair-ai" }
-ceair-mesh = { path = "crates/ceair-mesh" }
-ceair-config = { path = "crates/ceair-config" }
-ceair-audit = { path = "crates/ceair-audit" }
-ceair-tui = { path = "crates/ceair-tui" }
-ceair-mcp = { path = "crates/ceair-mcp" }
-ceair-session = { path = "crates/ceair-session" }
+chengcoding-core = { path = "crates/chengcoding-core" }
+chengcoding-agent = { path = "crates/chengcoding-agent" }
+chengcoding-tools = { path = "crates/chengcoding-tools" }
+chengcoding-ai = { path = "crates/chengcoding-ai" }
+chengcoding-mesh = { path = "crates/chengcoding-mesh" }
+chengcoding-config = { path = "crates/chengcoding-config" }
+chengcoding-audit = { path = "crates/chengcoding-audit" }
+chengcoding-tui = { path = "crates/chengcoding-tui" }
+chengcoding-mcp = { path = "crates/chengcoding-mcp" }
+chengcoding-session = { path = "crates/chengcoding-session" }
 axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
-ceair-control-protocol = { path = "crates/ceair-control-protocol" }
-ceair-control-server = { path = "crates/ceair-control-server" }
-ceair-worker = { path = "crates/ceair-worker" }
+chengcoding-control-protocol = { path = "crates/chengcoding-control-protocol" }
+chengcoding-control-server = { path = "crates/chengcoding-control-server" }
+chengcoding-worker = { path = "crates/chengcoding-worker" }

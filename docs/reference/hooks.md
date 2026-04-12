@@ -1,6 +1,6 @@
 # Hook 系统参考手册
 
-> CEAIR Hook 系统允许在 Agent 生命周期的关键节点插入自定义逻辑，实现行为扩展和监控。
+> ChengCoding Hook 系统允许在 Agent 生命周期的关键节点插入自定义逻辑，实现行为扩展和监控。
 
 ## 目录
 
@@ -22,7 +22,7 @@
 
 ## 概述
 
-Hook 系统位于 `ceair-agent` crate 的 `hooks.rs` 模块中，提供了一套可扩展的事件拦截机制。通过注册 Hook，可以在 Agent 执行流程的关键点进行：
+Hook 系统位于 `chengcoding-agent` crate 的 `hooks.rs` 模块中，提供了一套可扩展的事件拦截机制。通过注册 Hook，可以在 Agent 执行流程的关键点进行：
 
 - **监控**：记录日志、收集指标
 - **修改**：转换消息内容、调整参数
@@ -260,7 +260,7 @@ pub type HookHandler = Arc<dyn Fn(&HookContext) -> HookAction + Send + Sync>;
 
 ## 26 种内置 Hook
 
-CEAIR 预注册了以下内置 Hook，覆盖安全、监控、转换等核心功能：
+ChengCoding 预注册了以下内置 Hook，覆盖安全、监控、转换等核心功能：
 
 ### 安全类 Hook（Critical 优先级）
 
@@ -364,7 +364,7 @@ impl HookRegistry {
 ### 注册示例
 
 ```rust
-use ceair_agent::hooks::*;
+use chengcoding_agent::hooks::*;
 
 let mut registry = HookRegistry::new();
 
@@ -524,7 +524,7 @@ impl HookContext {
 ### 步骤一：定义 Hook
 
 ```rust
-use ceair_agent::hooks::*;
+use chengcoding_agent::hooks::*;
 
 fn create_my_hook() -> HookDef {
     HookDef {
@@ -564,11 +564,11 @@ registry.register(create_my_hook());
 
 | 变量名 | 描述 |
 |--------|------|
-| `CEAIR_HOOK_EVENT` | 事件类型（如 `PreToolCall`） |
-| `CEAIR_HOOK_SESSION_ID` | 会话 ID |
-| `CEAIR_HOOK_TOOL_NAME` | 工具名称 |
-| `CEAIR_HOOK_TOOL_PARAMS` | 工具参数（JSON） |
-| `CEAIR_HOOK_TOOL_RESULT` | 工具结果 |
+| `ChengCoding_HOOK_EVENT` | 事件类型（如 `PreToolCall`） |
+| `ChengCoding_HOOK_SESSION_ID` | 会话 ID |
+| `ChengCoding_HOOK_TOOL_NAME` | 工具名称 |
+| `ChengCoding_HOOK_TOOL_PARAMS` | 工具参数（JSON） |
+| `ChengCoding_HOOK_TOOL_RESULT` | 工具结果 |
 
 **脚本返回值**:
 
@@ -587,7 +587,7 @@ registry.register(create_my_hook());
 #!/bin/bash
 
 # 检查是否在敏感目录中执行
-if echo "$CEAIR_HOOK_TOOL_PARAMS" | grep -q "/etc/"; then
+if echo "$ChengCoding_HOOK_TOOL_PARAMS" | grep -q "/etc/"; then
     echo "禁止访问 /etc/ 目录" >&2
     exit 1  # Block
 fi

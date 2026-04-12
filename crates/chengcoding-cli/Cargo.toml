@@ -1,0 +1,44 @@
+[package]
+name = "chengcoding-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI entry point for ChengCoding"
+
+[[bin]]
+name = "chengcoding"
+path = "src/main.rs"
+
+[dependencies]
+chengcoding-core = { workspace = true }
+chengcoding-agent = { workspace = true }
+chengcoding-tools = { workspace = true }
+chengcoding-ai = { workspace = true }
+chengcoding-mesh = { workspace = true }
+chengcoding-config = { workspace = true }
+chengcoding-audit = { workspace = true }
+chengcoding-tui = { workspace = true }
+chengcoding-mcp = { workspace = true }
+chengcoding-control-server = { workspace = true }
+chengcoding-worker = { workspace = true }
+async-trait = { workspace = true }
+tokio-util = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+ring = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+base64 = { workspace = true }
+dashmap = { workspace = true }
+dirs = "5.0"
+
+[dev-dependencies]
+tempfile = { workspace = true }

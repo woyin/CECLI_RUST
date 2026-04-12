@@ -9,8 +9,8 @@ Result: **PASS**
 `serve.rs` 中 `LocalAgentExecutor::execute_turn` 每次创建 `CancellationToken::new()`，与 `SessionSupervisor` 中会话的取消令牌完全无关，导致 `cancel_task` 操作无法传播到执行中的代理循环。
 
 ## 修改文件
-1. `crates/ceair-worker/src/runtime.rs` — `AgentExecutor::execute_turn` 签名新增 `cancel_token: CancellationToken` 参数；`run_agent_turn` 从 session 获取 token 并传递
-2. `crates/ceair-cli/src/commands/serve.rs` — `execute_turn` 使用传入的 `cancel_token` 替代 `CancellationToken::new()`
+1. `crates/chengcoding-worker/src/runtime.rs` — `AgentExecutor::execute_turn` 签名新增 `cancel_token: CancellationToken` 参数；`run_agent_turn` 从 session 获取 token 并传递
+2. `crates/chengcoding-cli/src/commands/serve.rs` — `execute_turn` 使用传入的 `cancel_token` 替代 `CancellationToken::new()`
 
 ## 是否存在遗漏路径
 ✅ 无遗漏。所有取消路径：

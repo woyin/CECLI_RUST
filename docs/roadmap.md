@@ -1,4 +1,4 @@
-# CEAIR 系统升级路线图
+# ChengCoding 系统升级路线图
 
 > 基于 `docs/analysis.md` 分析报告和已完成的 TODO.md 任务，
 > 本文档定义从当前状态到完整 Agent OS 的演进路径。
@@ -42,7 +42,7 @@ Phase 3: invariants.md ◄──────────────────
     │
 Phase 4: invariant tests ◄───────────────────────────────┘
     │
-Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
+Phase 5: invariant checker (chengcoding-invariant crate) ◄─────┘
     │
     ├──► Phase 6: pre-check gate
     │
@@ -97,7 +97,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 5: 不变量检查器
 
-**输出**: `crates/ceair-invariant/`
+**输出**: `crates/chengcoding-invariant/`
 
 **模块**:
 - `checker.rs` — 不变量验证执行器
@@ -108,7 +108,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 6: Pre-Check Gate
 
-**集成到**: `crates/ceair-invariant/src/gate.rs`
+**集成到**: `crates/chengcoding-invariant/src/gate.rs`
 
 **能力**:
 - 分析 `git diff` 输出
@@ -119,7 +119,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 7: Runtime Guard
 
-**集成到**: `crates/ceair-invariant/src/runtime_guard.rs`
+**集成到**: `crates/chengcoding-invariant/src/runtime_guard.rs`
 
 **拦截项**:
 - 未鉴权 WebSocket 连接
@@ -131,7 +131,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 8: Auto Rollback
 
-**集成到**: `crates/ceair-invariant/src/rollback.rs`
+**集成到**: `crates/chengcoding-invariant/src/rollback.rs`
 
 **触发条件**:
 - 测试失败
@@ -146,7 +146,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 9: Verification Agent
 
-**集成到**: `crates/ceair-agent/src/verification/`
+**集成到**: `crates/chengcoding-agent/src/verification/`
 
 **检查项**:
 - 是否符合 `analysis.md` 设计
@@ -160,7 +160,7 @@ Phase 5: invariant checker (ceair-invariant crate) ◄─────┘
 
 ## Phase 10: Self-Healing
 
-**集成到**: `crates/ceair-invariant/src/healing.rs`
+**集成到**: `crates/chengcoding-invariant/src/healing.rs`
 
 **流程**:
 1. 检测不变量违规

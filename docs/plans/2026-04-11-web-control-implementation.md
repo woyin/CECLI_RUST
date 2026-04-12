@@ -2,36 +2,36 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add `ceair serve --bind 127.0.0.1:PORT` to provide browser-based local control of CEAIR agents via HTTP + WebSocket.
+**Goal:** Add `ChengCoding serve --bind 127.0.0.1:PORT` to provide browser-based local control of ChengCoding agents via HTTP + WebSocket.
 
-**Architecture:** Three new crates (`ceair-control-protocol`, `ceair-control-server`, `ceair-worker`) sit atop the existing agent runtime. A `serve` CLI subcommand starts an HTTP/WS server on localhost. The browser connects via WebSocket for bidirectional streaming. The worker wraps `AgentLoop` and converts `AgentEvent` into control-protocol events. Approval is upgraded from synchronous CLI prompts to async suspend/resume over WebSocket.
+**Architecture:** Three new crates (`chengcoding-control-protocol`, `chengcoding-control-server`, `chengcoding-worker`) sit atop the existing agent runtime. A `serve` CLI subcommand starts an HTTP/WS server on localhost. The browser connects via WebSocket for bidirectional streaming. The worker wraps `AgentLoop` and converts `AgentEvent` into control-protocol events. Approval is upgraded from synchronous CLI prompts to async suspend/resume over WebSocket.
 
-**Tech Stack:** Rust, axum (HTTP/WS), tokio, serde/serde_json, tokio-tungstenite (via axum), uuid, chrono. Existing ceair-core/agent/session/audit/tools crates.
+**Tech Stack:** Rust, axum (HTTP/WS), tokio, serde/serde_json, tokio-tungstenite (via axum), uuid, chrono. Existing chengcoding-core/agent/session/audit/tools crates.
 
 ---
 
-## Task 1: Create `ceair-control-protocol` Crate — Types & Events
+## Task 1: Create `chengcoding-control-protocol` Crate — Types & Events
 
 **Files:**
-- Create: `crates/ceair-control-protocol/Cargo.toml`
-- Create: `crates/ceair-control-protocol/src/lib.rs`
-- Create: `crates/ceair-control-protocol/src/event.rs`
-- Create: `crates/ceair-control-protocol/src/command.rs`
-- Create: `crates/ceair-control-protocol/src/session.rs`
-- Create: `crates/ceair-control-protocol/src/approval.rs`
-- Create: `crates/ceair-control-protocol/src/error.rs`
+- Create: `crates/chengcoding-control-protocol/Cargo.toml`
+- Create: `crates/chengcoding-control-protocol/src/lib.rs`
+- Create: `crates/chengcoding-control-protocol/src/event.rs`
+- Create: `crates/chengcoding-control-protocol/src/command.rs`
+- Create: `crates/chengcoding-control-protocol/src/session.rs`
+- Create: `crates/chengcoding-control-protocol/src/approval.rs`
+- Create: `crates/chengcoding-control-protocol/src/error.rs`
 - Modify: `Cargo.toml` (workspace members)
-- Test: `crates/ceair-control-protocol/src/lib.rs` (inline tests)
+- Test: `crates/chengcoding-control-protocol/src/lib.rs` (inline tests)
 
 This crate defines the shared protocol types used between browser, server, and worker. No I/O, no async — pure data types with serde.
 
 ### Step 1: Write failing test for protocol message serialization
 
-Create `crates/ceair-control-protocol/Cargo.toml`:
+Create `crates/chengcoding-control-protocol/Cargo.toml`:
 
 ```toml
 [package]
-name = "ceair-control-protocol"
+name = "chengcoding-control-protocol"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -43,10 +43,10 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 thiserror = { workspace = true }
-ceair-core = { workspace = true }
+chengcoding-core = { workspace = true }
 ```
 
-Create `crates/ceair-control-protocol/src/lib.rs`:
+Create `crates/chengcoding-control-protocol/src/lib.rs`:
 
 ```rust
 pub mod approval;
@@ -126,7 +126,7 @@ mod tests {
 ### Step 2: Implement `event.rs` — Server-to-browser events
 
 ```rust
-// crates/ceair-control-protocol/src/event.rs
+// crates/chengcoding-control-protocol/src/event.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -266,7 +266,7 @@ pub enum HistoryEntry {
 ### Step 3: Implement `command.rs` — Browser-to-server commands
 
 ```rust
-// crates/ceair-control-protocol/src/command.rs
+// crates/chengcoding-control-protocol/src/command.rs
 use serde::{Deserialize, Serialize};
 
 /// Commands sent from the browser client to the server.
@@ -357,7 +357,7 @@ impl ClientCommand {
 ### Step 4: Implement `session.rs` — Session model
 
 ```rust
-// crates/ceair-control-protocol/src/session.rs
+// crates/chengcoding-control-protocol/src/session.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -393,7 +393,7 @@ pub struct SessionInfo {
 ### Step 5: Implement `approval.rs` — Approval model
 
 ```rust
-// crates/ceair-control-protocol/src/approval.rs
+// crates/chengcoding-control-protocol/src/approval.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -431,7 +431,7 @@ pub enum ApprovalDecision {
 ### Step 6: Implement `error.rs` — Protocol error codes
 
 ```rust
-// crates/ceair-control-protocol/src/error.rs
+// crates/chengcoding-control-protocol/src/error.rs
 use serde::{Deserialize, Serialize};
 
 /// Protocol-level error codes.
@@ -466,16 +466,16 @@ impl ErrorCode {
 
 ### Step 7: Register in workspace and run tests
 
-Add `ceair-control-protocol` to workspace `Cargo.toml` members and dependencies.
+Add `chengcoding-control-protocol` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p ceair-control-protocol`
+Run: `cargo test -p chengcoding-control-protocol`
 Expected: All 4 tests pass.
 
 ### Step 8: Commit
 
 ```bash
-git add crates/ceair-control-protocol/ Cargo.toml Cargo.lock
-git commit -m "feat: add ceair-control-protocol crate with shared types
+git add crates/chengcoding-control-protocol/ Cargo.toml Cargo.lock
+git commit -m "feat: add chengcoding-control-protocol crate with shared types
 
 Define the browser/server/worker control protocol:
 - ClientCommand: browser-to-server commands (attach, create, message, cancel, approve)
@@ -488,15 +488,15 @@ Define the browser/server/worker control protocol:
 
 ---
 
-## Task 2: Create `ceair-worker` Crate — Agent Runtime Adapter
+## Task 2: Create `chengcoding-worker` Crate — Agent Runtime Adapter
 
 **Files:**
-- Create: `crates/ceair-worker/Cargo.toml`
-- Create: `crates/ceair-worker/src/lib.rs`
-- Create: `crates/ceair-worker/src/runtime.rs`
-- Create: `crates/ceair-worker/src/session_bridge.rs`
-- Create: `crates/ceair-worker/src/event_bridge.rs`
-- Create: `crates/ceair-worker/src/approval_bridge.rs`
+- Create: `crates/chengcoding-worker/Cargo.toml`
+- Create: `crates/chengcoding-worker/src/lib.rs`
+- Create: `crates/chengcoding-worker/src/runtime.rs`
+- Create: `crates/chengcoding-worker/src/session_bridge.rs`
+- Create: `crates/chengcoding-worker/src/event_bridge.rs`
+- Create: `crates/chengcoding-worker/src/approval_bridge.rs`
 - Modify: `Cargo.toml` (workspace members)
 - Test: inline unit tests
 
@@ -504,24 +504,24 @@ This crate wraps the existing `AgentLoop` and converts its events into control-p
 
 ### Step 1: Write failing test for event bridge
 
-Create `crates/ceair-worker/Cargo.toml`:
+Create `crates/chengcoding-worker/Cargo.toml`:
 
 ```toml
 [package]
-name = "ceair-worker"
+name = "chengcoding-worker"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ceair-core = { workspace = true }
-ceair-agent = { workspace = true }
-ceair-tools = { workspace = true }
-ceair-session = { workspace = true }
-ceair-audit = { workspace = true }
-ceair-config = { workspace = true }
-ceair-control-protocol = { workspace = true }
+chengcoding-core = { workspace = true }
+chengcoding-agent = { workspace = true }
+chengcoding-tools = { workspace = true }
+chengcoding-session = { workspace = true }
+chengcoding-audit = { workspace = true }
+chengcoding-config = { workspace = true }
+chengcoding-control-protocol = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 serde = { workspace = true }
@@ -537,13 +537,13 @@ parking_lot = { workspace = true }
 tokio = { workspace = true, features = ["test-util", "macros"] }
 ```
 
-Create `crates/ceair-worker/src/event_bridge.rs` with tests:
+Create `crates/chengcoding-worker/src/event_bridge.rs` with tests:
 
 ```rust
 //! Converts AgentEvent into ServerEvent for the control protocol.
 
-use ceair_control_protocol::ServerEvent;
-use ceair_core::event::AgentEvent;
+use chengcoding_control_protocol::ServerEvent;
+use chengcoding_core::event::AgentEvent;
 use chrono::Utc;
 
 /// Convert an internal AgentEvent to a control-protocol ServerEvent.
@@ -613,7 +613,7 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ceair_core::{AgentId, SessionId, TokenUsage};
+    use chengcoding_core::{AgentId, SessionId, TokenUsage};
 
     #[test]
     fn test_stream_chunk_converts_to_delta() {
@@ -677,7 +677,7 @@ mod tests {
 ```rust
 //! Async approval bridge: suspends tool execution pending user decision.
 
-use ceair_control_protocol::{ApprovalDecision, ApprovalRequest, RiskLevel};
+use chengcoding_control_protocol::{ApprovalDecision, ApprovalRequest, RiskLevel};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::oneshot;
@@ -802,7 +802,7 @@ mod tests {
 ```rust
 //! Manages active sessions and their associated agent loops.
 
-use ceair_control_protocol::{SessionInfo, SessionState};
+use chengcoding_control_protocol::{SessionInfo, SessionState};
 use chrono::Utc;
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -969,7 +969,7 @@ mod tests {
 use crate::approval_bridge::ApprovalBridge;
 use crate::event_bridge::agent_event_to_server_event;
 use crate::session_bridge::SessionSupervisor;
-use ceair_control_protocol::{ServerEvent, SessionState};
+use chengcoding_control_protocol::{ServerEvent, SessionState};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
 use tracing;
@@ -1007,7 +1007,7 @@ impl WorkerRuntime {
     pub fn spawn_event_forwarder(
         &self,
         session_id: String,
-        mut agent_rx: mpsc::Receiver<ceair_core::event::AgentEvent>,
+        mut agent_rx: mpsc::Receiver<chengcoding_core::event::AgentEvent>,
     ) {
         let event_tx = self.event_tx.clone();
         let sessions = self.sessions.clone();
@@ -1022,10 +1022,10 @@ impl WorkerRuntime {
 
                 // Update session state on completion/error
                 match &agent_event {
-                    ceair_core::event::AgentEvent::Completed { .. } => {
+                    chengcoding_core::event::AgentEvent::Completed { .. } => {
                         sessions.update_state(&session_id, SessionState::Idle);
                     }
-                    ceair_core::event::AgentEvent::Error { .. } => {
+                    chengcoding_core::event::AgentEvent::Error { .. } => {
                         sessions.update_state(&session_id, SessionState::Error);
                     }
                     _ => {}
@@ -1065,7 +1065,7 @@ mod tests {
 ### Step 5: Implement `lib.rs`
 
 ```rust
-// crates/ceair-worker/src/lib.rs
+// crates/chengcoding-worker/src/lib.rs
 pub mod approval_bridge;
 pub mod event_bridge;
 pub mod runtime;
@@ -1079,16 +1079,16 @@ pub use session_bridge::SessionSupervisor;
 
 ### Step 6: Register in workspace and run tests
 
-Add `ceair-worker` to workspace `Cargo.toml` members and dependencies.
+Add `chengcoding-worker` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p ceair-worker`
+Run: `cargo test -p chengcoding-worker`
 Expected: All tests pass.
 
 ### Step 7: Commit
 
 ```bash
-git add crates/ceair-worker/ Cargo.toml Cargo.lock
-git commit -m "feat: add ceair-worker crate with runtime adapter
+git add crates/chengcoding-worker/ Cargo.toml Cargo.lock
+git commit -m "feat: add chengcoding-worker crate with runtime adapter
 
 - EventBridge: converts AgentEvent to ServerEvent
 - ApprovalBridge: async suspend/resume for tool approvals
@@ -1098,16 +1098,16 @@ git commit -m "feat: add ceair-worker crate with runtime adapter
 
 ---
 
-## Task 3: Create `ceair-control-server` Crate — HTTP + WebSocket Server
+## Task 3: Create `chengcoding-control-server` Crate — HTTP + WebSocket Server
 
 **Files:**
-- Create: `crates/ceair-control-server/Cargo.toml`
-- Create: `crates/ceair-control-server/src/lib.rs`
-- Create: `crates/ceair-control-server/src/auth.rs`
-- Create: `crates/ceair-control-server/src/routes.rs`
-- Create: `crates/ceair-control-server/src/ws.rs`
-- Create: `crates/ceair-control-server/src/session_api.rs`
-- Create: `crates/ceair-control-server/src/approval_api.rs`
+- Create: `crates/chengcoding-control-server/Cargo.toml`
+- Create: `crates/chengcoding-control-server/src/lib.rs`
+- Create: `crates/chengcoding-control-server/src/auth.rs`
+- Create: `crates/chengcoding-control-server/src/routes.rs`
+- Create: `crates/chengcoding-control-server/src/ws.rs`
+- Create: `crates/chengcoding-control-server/src/session_api.rs`
+- Create: `crates/chengcoding-control-server/src/approval_api.rs`
 - Modify: `Cargo.toml` (workspace members and deps)
 - Test: inline tests + integration test
 
@@ -1122,20 +1122,20 @@ tower-http = { version = "0.5", features = ["cors", "trace"] }
 hyper = { version = "1.0", features = ["full"] }
 ```
 
-Create `crates/ceair-control-server/Cargo.toml`:
+Create `crates/chengcoding-control-server/Cargo.toml`:
 
 ```toml
 [package]
-name = "ceair-control-server"
+name = "chengcoding-control-server"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ceair-core = { workspace = true }
-ceair-control-protocol = { workspace = true }
-ceair-worker = { workspace = true }
+chengcoding-core = { workspace = true }
+chengcoding-control-protocol = { workspace = true }
+chengcoding-worker = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 tower = { workspace = true }
@@ -1227,8 +1227,8 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use ceair_control_protocol::SessionInfo;
-use ceair_worker::WorkerRuntime;
+use chengcoding_control_protocol::SessionInfo;
+use chengcoding_worker::WorkerRuntime;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -1317,8 +1317,8 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use ceair_control_protocol::ApprovalDecision;
-use ceair_worker::WorkerRuntime;
+use chengcoding_control_protocol::ApprovalDecision;
+use chengcoding_worker::WorkerRuntime;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -1353,8 +1353,8 @@ use axum::{
     },
     response::IntoResponse,
 };
-use ceair_control_protocol::{ClientCommand, ServerEvent};
-use ceair_worker::WorkerRuntime;
+use chengcoding_control_protocol::{ClientCommand, ServerEvent};
+use chengcoding_worker::WorkerRuntime;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::sync::Arc;
@@ -1482,7 +1482,7 @@ async fn handle_command(cmd: ClientCommand, runtime: &WorkerRuntime) {
             // Mark session as running
             runtime.sessions.update_state(
                 &session_id,
-                ceair_control_protocol::SessionState::Running,
+                chengcoding_control_protocol::SessionState::Running,
             );
             runtime.publish_event(ServerEvent::AgentStatus {
                 session_id: session_id.clone(),
@@ -1518,7 +1518,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
-use ceair_worker::WorkerRuntime;
+use chengcoding_worker::WorkerRuntime;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -1607,7 +1607,7 @@ async fn auth_middleware(
 ### Step 7: Implement `lib.rs` — Server entrypoint
 
 ```rust
-// crates/ceair-control-server/src/lib.rs
+// crates/chengcoding-control-server/src/lib.rs
 pub mod approval_api;
 pub mod auth;
 pub mod routes;
@@ -1615,7 +1615,7 @@ pub mod session_api;
 pub mod ws;
 
 use auth::LocalAuth;
-use ceair_worker::WorkerRuntime;
+use chengcoding_worker::WorkerRuntime;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -1659,16 +1659,16 @@ pub async fn start_server(
 
 ### Step 8: Register in workspace and run tests
 
-Add `ceair-control-server` to workspace `Cargo.toml` members and dependencies.
+Add `chengcoding-control-server` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p ceair-control-server && cargo check -p ceair-control-server`
+Run: `cargo test -p chengcoding-control-server && cargo check -p chengcoding-control-server`
 Expected: All tests pass, crate compiles.
 
 ### Step 9: Commit
 
 ```bash
-git add crates/ceair-control-server/ Cargo.toml Cargo.lock
-git commit -m "feat: add ceair-control-server with HTTP/WebSocket endpoints
+git add crates/chengcoding-control-server/ Cargo.toml Cargo.lock
+git commit -m "feat: add chengcoding-control-server with HTTP/WebSocket endpoints
 
 - LocalAuth: one-time token authentication for localhost mode
 - Session API: create, list, get, cancel, close sessions
@@ -1680,20 +1680,20 @@ git commit -m "feat: add ceair-control-server with HTTP/WebSocket endpoints
 
 ---
 
-## Task 4: Add `serve` Subcommand to `ceair-cli`
+## Task 4: Add `serve` Subcommand to `chengcoding-cli`
 
 **Files:**
-- Create: `crates/ceair-cli/src/commands/serve.rs`
-- Modify: `crates/ceair-cli/src/main.rs` (add Serve variant)
-- Modify: `crates/ceair-cli/src/commands/mod.rs` (if exists, add module)
-- Modify: `crates/ceair-cli/Cargo.toml` (add dependencies)
+- Create: `crates/chengcoding-cli/src/commands/serve.rs`
+- Modify: `crates/chengcoding-cli/src/main.rs` (add Serve variant)
+- Modify: `crates/chengcoding-cli/src/commands/mod.rs` (if exists, add module)
+- Modify: `crates/chengcoding-cli/Cargo.toml` (add dependencies)
 
 ### Step 1: Write the `serve.rs` command
 
 ```rust
-// crates/ceair-cli/src/commands/serve.rs
-use ceair_control_server::ControlServerConfig;
-use ceair_worker::WorkerRuntime;
+// crates/chengcoding-cli/src/commands/serve.rs
+use chengcoding_control_server::ControlServerConfig;
+use chengcoding_worker::WorkerRuntime;
 use clap::Args;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -1712,10 +1712,10 @@ pub async fn execute(args: ServeArgs) -> anyhow::Result<()> {
         bind_addr: args.bind,
     };
 
-    let token = ceair_control_server::start_server(config, runtime).await?;
+    let token = chengcoding_control_server::start_server(config, runtime).await?;
 
     println!("\n╔══════════════════════════════════════════════════╗");
-    println!("║          CEAIR Control Server Started            ║");
+    println!("║          ChengCoding Control Server Started            ║");
     println!("╠══════════════════════════════════════════════════╣");
     println!("║                                                  ║");
     println!("║  URL:   http://{}           ║", args.bind);
@@ -1736,24 +1736,24 @@ pub async fn execute(args: ServeArgs) -> anyhow::Result<()> {
 
 ### Step 2: Add `Serve` variant to CLI command enum
 
-In `crates/ceair-cli/src/main.rs`, add:
+In `crates/chengcoding-cli/src/main.rs`, add:
 - `Serve(serve::ServeArgs)` to the `Commands` enum
 - `Commands::Serve(args) => serve::execute(args).await` to the match
 
-### Step 3: Add dependencies to `ceair-cli/Cargo.toml`
+### Step 3: Add dependencies to `chengcoding-cli/Cargo.toml`
 
 ```toml
-ceair-control-server = { workspace = true }
-ceair-worker = { workspace = true }
-ceair-control-protocol = { workspace = true }
+chengcoding-control-server = { workspace = true }
+chengcoding-worker = { workspace = true }
+chengcoding-control-protocol = { workspace = true }
 ```
 
 ### Step 4: Run build and manual smoke test
 
-Run: `cargo build -p ceair-cli`
+Run: `cargo build -p chengcoding-cli`
 Expected: Compiles successfully.
 
-Run: `cargo run -p ceair-cli -- serve --bind 127.0.0.1:3200`
+Run: `cargo run -p chengcoding-cli -- serve --bind 127.0.0.1:3200`
 Expected: Server starts, prints token and URL.
 
 Test health: `curl http://127.0.0.1:3200/health`
@@ -1762,8 +1762,8 @@ Expected: `ok`
 ### Step 5: Commit
 
 ```bash
-git add crates/ceair-cli/src/commands/serve.rs crates/ceair-cli/src/main.rs crates/ceair-cli/Cargo.toml Cargo.toml Cargo.lock
-git commit -m "feat: add 'ceair serve' subcommand for local web control
+git add crates/chengcoding-cli/src/commands/serve.rs crates/chengcoding-cli/src/main.rs crates/chengcoding-cli/Cargo.toml Cargo.toml Cargo.lock
+git commit -m "feat: add 'ChengCoding serve' subcommand for local web control
 
 Starts HTTP + WebSocket server on localhost:3200 (configurable via --bind).
 Displays auth token on startup. Ctrl+C for graceful shutdown."
@@ -1774,15 +1774,15 @@ Displays auth token on startup. Ctrl+C for graceful shutdown."
 ## Task 5: Connect Agent Execution to WebSocket Flow
 
 **Files:**
-- Modify: `crates/ceair-control-server/src/ws.rs` (wire up agent invocation)
-- Modify: `crates/ceair-worker/src/runtime.rs` (add run_agent method)
-- Modify: `crates/ceair-cli/src/commands/serve.rs` (pass config for AI provider)
+- Modify: `crates/chengcoding-control-server/src/ws.rs` (wire up agent invocation)
+- Modify: `crates/chengcoding-worker/src/runtime.rs` (add run_agent method)
+- Modify: `crates/chengcoding-cli/src/commands/serve.rs` (pass config for AI provider)
 
 This task connects the `UserMessage` WebSocket command to actual `AgentLoop` execution.
 
 ### Step 1: Add `run_agent_turn` to WorkerRuntime
 
-In `crates/ceair-worker/src/runtime.rs`, add a method that:
+In `crates/chengcoding-worker/src/runtime.rs`, add a method that:
 1. Creates an `AgentContext` for the session
 2. Spins up `AgentLoop` with an `mpsc` channel for events
 3. Calls `spawn_event_forwarder` to pipe events to WebSocket
@@ -1794,11 +1794,11 @@ pub async fn run_agent_turn(
     &self,
     session_id: &str,
     user_content: &str,
-    ai_provider: Arc<dyn ceair_ai::AiProvider>,
-    tool_registry: Arc<ceair_tools::ToolRegistry>,
+    ai_provider: Arc<dyn chengcoding_ai::AiProvider>,
+    tool_registry: Arc<chengcoding_tools::ToolRegistry>,
 ) -> anyhow::Result<()> {
-    use ceair_agent::{AgentLoop, AgentLoopConfig, AgentContext};
-    use ceair_core::{AgentId, SessionId};
+    use chengcoding_agent::{AgentLoop, AgentLoopConfig, AgentContext};
+    use chengcoding_core::{AgentId, SessionId};
     use tokio::sync::mpsc;
 
     let sid = session_id.to_string();
@@ -1808,7 +1808,7 @@ pub async fn run_agent_turn(
     let cancel_token = self.sessions.get_cancel_token(&sid)
         .ok_or_else(|| anyhow::anyhow!("Session not found: {}", sid))?;
 
-    self.sessions.update_state(&sid, ceair_control_protocol::SessionState::Running);
+    self.sessions.update_state(&sid, chengcoding_control_protocol::SessionState::Running);
 
     // Create agent context
     let mut context = AgentContext::new(
@@ -1818,7 +1818,7 @@ pub async fn run_agent_turn(
     context.add_user_message(user_content);
 
     // Create agent loop
-    let executor = ceair_agent::ToolExecutor::new(tool_registry);
+    let executor = chengcoding_agent::ToolExecutor::new(tool_registry);
     let config = AgentLoopConfig::default();
     let mut agent = AgentLoop::new(
         AgentId::new(),
@@ -1836,14 +1836,14 @@ pub async fn run_agent_turn(
     let sessions = self.sessions.clone();
     let sid_clone = sid.clone();
     tokio::spawn(async move {
-        let chat_options = ceair_ai::ChatOptions::default();
+        let chat_options = chengcoding_ai::ChatOptions::default();
         match agent.run(&chat_options, cancel_token, event_tx).await {
             Ok(_result) => {
-                sessions.update_state(&sid_clone, ceair_control_protocol::SessionState::Idle);
+                sessions.update_state(&sid_clone, chengcoding_control_protocol::SessionState::Idle);
             }
             Err(e) => {
                 tracing::error!(session_id = %sid_clone, "Agent error: {}", e);
-                sessions.update_state(&sid_clone, ceair_control_protocol::SessionState::Error);
+                sessions.update_state(&sid_clone, chengcoding_control_protocol::SessionState::Error);
             }
         }
     });
@@ -1865,13 +1865,13 @@ Create a simple integration test that:
 3. Sends a `Ping` command
 4. Receives a `Pong` response
 
-Run: `cargo test -p ceair-control-server`
+Run: `cargo test -p chengcoding-control-server`
 Expected: All tests pass.
 
 ### Step 4: Commit
 
 ```bash
-git add crates/ceair-worker/ crates/ceair-control-server/ crates/ceair-cli/
+git add crates/chengcoding-worker/ crates/chengcoding-control-server/ crates/chengcoding-cli/
 git commit -m "feat: connect agent execution to WebSocket flow
 
 UserMessage commands now trigger AgentLoop execution.
@@ -1883,7 +1883,7 @@ Events are streamed back to WebSocket clients in real-time."
 ## Task 6: Integration Test — End-to-End Flow
 
 **Files:**
-- Create: `tests/integration/control_server_test.rs` or inline in `ceair-control-server`
+- Create: `tests/integration/control_server_test.rs` or inline in `chengcoding-control-server`
 
 ### Step 1: Write integration test
 
@@ -1921,7 +1921,7 @@ Tests cover session CRUD, WebSocket ping/pong, and health check."
 ### Step 1: Update README with `serve` usage
 
 Add a section documenting:
-- `ceair serve --bind 127.0.0.1:3200`
+- `ChengCoding serve --bind 127.0.0.1:3200`
 - How to use the auth token
 - Available HTTP API endpoints
 - WebSocket protocol basics
@@ -1936,7 +1936,7 @@ Add a section to `docs/architecture/overview.md` describing the control plane ar
 git add README.md docs/
 git commit -m "docs: add control plane documentation
 
-Document the 'ceair serve' command, HTTP API, WebSocket protocol,
+Document the 'ChengCoding serve' command, HTTP API, WebSocket protocol,
 and control plane architecture."
 ```
 
@@ -1945,11 +1945,11 @@ and control plane architecture."
 ## Dependency Graph
 
 ```
-Task 1: ceair-control-protocol  (no deps)
+Task 1: chengcoding-control-protocol  (no deps)
     ↓
-Task 2: ceair-worker            (depends on Task 1)
+Task 2: chengcoding-worker            (depends on Task 1)
     ↓
-Task 3: ceair-control-server    (depends on Task 1, 2)
+Task 3: chengcoding-control-server    (depends on Task 1, 2)
     ↓
 Task 4: CLI serve command       (depends on Task 3)
     ↓

@@ -1,6 +1,6 @@
 # 安全架构
 
-> CEAIR 采用纵深防御策略，通过多层安全机制保护系统免受未授权访问和数据泄露。
+> ChengCoding 采用纵深防御策略，通过多层安全机制保护系统免受未授权访问和数据泄露。
 
 ## 目录
 
@@ -19,11 +19,11 @@
 
 ## 概述
 
-CEAIR 的安全架构遵循"纵深防御"（Defense in Depth）原则，在多个层次设置安全控制点：
+ChengCoding 的安全架构遵循"纵深防御"（Defense in Depth）原则，在多个层次设置安全控制点：
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                   CEAIR 安全架构全景                           │
+│                   ChengCoding 安全架构全景                           │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌── 第 1 层: 请求拦截 ─────────────────────────────────┐    │
@@ -325,7 +325,7 @@ JSON Lines (`.jsonl`)，每行一个审计条目：
 
 ```rust
 pub struct AuditLoggerConfig {
-    pub log_path: PathBuf,      // 默认: ~/.config/ceair/audit/
+    pub log_path: PathBuf,      // 默认: ~/.config/ChengCoding/audit/
     pub max_file_size: u64,     // 默认: 10MB
     pub batch_size: usize,      // 默认: 100 条
     pub sanitize: bool,         // 默认: true
@@ -435,7 +435,7 @@ HTTP 模式（远程服务器）:
 
 1. 系统密钥环（macOS Keychain / Linux Secret Service）
 2. 用户密码 + PBKDF2 派生
-3. 文件密钥 (`~/.config/ceair/keyring`)
+3. 文件密钥 (`~/.config/ChengCoding/keyring`)
 
 ---
 

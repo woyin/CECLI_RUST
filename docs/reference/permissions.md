@@ -1,6 +1,6 @@
 # 权限系统参考手册
 
-> CEAIR 权限系统提供多层次的访问控制，确保 Agent 操作在安全边界内执行。
+> ChengCoding 权限系统提供多层次的访问控制，确保 Agent 操作在安全边界内执行。
 
 ## 目录
 
@@ -20,7 +20,7 @@
 
 ## 概述
 
-CEAIR 的权限系统分为三层防护：
+ChengCoding 的权限系统分为三层防护：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -39,8 +39,8 @@ CEAIR 的权限系统分为三层防护：
 ```
 
 权限系统的实现跨越两个 crate：
-- `ceair-tools`：`permissions.rs`（权限定义）和 `security.rs`（安全策略）
-- `ceair-agent`：`hooks.rs`（权限 Hook 集成）
+- `chengcoding-tools`：`permissions.rs`（权限定义）和 `security.rs`（安全策略）
+- `chengcoding-agent`：`hooks.rs`（权限 Hook 集成）
 
 ---
 
@@ -500,7 +500,7 @@ guard_execute()
 
 ### 沙箱模型
 
-CEAIR 采用基于白名单的沙箱模型：
+ChengCoding 采用基于白名单的沙箱模型：
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -577,13 +577,13 @@ CEAIR 采用基于白名单的沙箱模型：
 | `task` | ✅ | ❌ | ✅ | ✅ | ❌ |
 | `ask` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-角色定义位于 `ceair-mesh` crate 的 `role_system.rs` 模块中。
+角色定义位于 `chengcoding-mesh` crate 的 `role_system.rs` 模块中。
 
 ---
 
 ## 配置方法
 
-### 配置文件 (`~/.config/ceair/config.toml`)
+### 配置文件 (`~/.config/ChengCoding/config.toml`)
 
 ```toml
 [tools]
@@ -605,22 +605,22 @@ auto_approve_tools = false
 
 | 环境变量 | 描述 | 示例 |
 |----------|------|------|
-| `CEAIR_AUTO_APPROVE` | 自动批准所有操作 | `true` |
-| `CEAIR_ALLOWED_DIRS` | 额外允许目录（逗号分隔） | `/opt/data,/var/log` |
-| `CEAIR_BLOCKED_PATHS` | 额外阻止路径（逗号分隔） | `/tmp/secret` |
-| `CEAIR_MAX_FILE_SIZE` | 最大文件大小 | `20971520` |
+| `ChengCoding_AUTO_APPROVE` | 自动批准所有操作 | `true` |
+| `ChengCoding_ALLOWED_DIRS` | 额外允许目录（逗号分隔） | `/opt/data,/var/log` |
+| `ChengCoding_BLOCKED_PATHS` | 额外阻止路径（逗号分隔） | `/tmp/secret` |
+| `ChengCoding_MAX_FILE_SIZE` | 最大文件大小 | `20971520` |
 
 ### 命令行参数
 
 ```bash
 # 自动批准模式
-ceair launch --auto-approve
+ChengCoding launch --auto-approve
 
 # 指定允许路径
-ceair launch --allowed-paths "src/,tests/"
+ChengCoding launch --allowed-paths "src/,tests/"
 
 # 指定日志级别
-ceair launch --log-level debug
+ChengCoding launch --log-level debug
 ```
 
 ---

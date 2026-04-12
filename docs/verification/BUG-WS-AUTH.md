@@ -12,8 +12,8 @@ Result: **PASS**
 - `build_router` 中 HTTP API 路由 — 不受影响（已有 `auth_middleware`）
 
 ## 修改文件
-1. `crates/ceair-control-server/src/ws.rs` — 新增 `check_ws_auth` 函数、`WsState` 结构体
-2. `crates/ceair-control-server/src/routes.rs` — 使用 `WsState` 替代裸 `Arc<WorkerRuntime>`
+1. `crates/chengcoding-control-server/src/ws.rs` — 新增 `check_ws_auth` 函数、`WsState` 结构体
+2. `crates/chengcoding-control-server/src/routes.rs` — 使用 `WsState` 替代裸 `Arc<WorkerRuntime>`
 
 ## 测试覆盖
 - `test_ws_auth_no_token_rejected` — 无 token 被拒绝

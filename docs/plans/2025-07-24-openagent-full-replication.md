@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** 在已有的 ceair-rewrite-rs (975 tests, 11 crates, 98 files) 基础上，完整复刻 oh-my-openagent 的所有功能，并增加 Codex OAuth、Sub-agent 通信、Zellij 集成等扩展功能。
+**Goal:** 在已有的 chengcoding-rewrite-rs (975 tests, 11 crates, 98 files) 基础上，完整复刻 oh-my-openagent 的所有功能，并增加 Codex OAuth、Sub-agent 通信、Zellij 集成等扩展功能。
 
 **Architecture:** 分 7 个阶段递进实现。每个阶段独立可编译、可测试、可提交。使用 Clean-room 方法——仅根据公开文档和功能描述重新实现，不参考原始代码。
 
@@ -15,20 +15,20 @@
 ### Task 4.1: Agent 定义与 Agent Registry 重构
 
 **Files:**
-- Create: `crates/ceair-agent/src/agents/mod.rs`
-- Create: `crates/ceair-agent/src/agents/sisyphus.rs`
-- Create: `crates/ceair-agent/src/agents/hephaestus.rs`
-- Create: `crates/ceair-agent/src/agents/prometheus.rs`
-- Create: `crates/ceair-agent/src/agents/atlas.rs`
-- Create: `crates/ceair-agent/src/agents/oracle.rs`
-- Create: `crates/ceair-agent/src/agents/librarian.rs`
-- Create: `crates/ceair-agent/src/agents/explore.rs`
-- Create: `crates/ceair-agent/src/agents/metis.rs`
-- Create: `crates/ceair-agent/src/agents/momus.rs`
-- Create: `crates/ceair-agent/src/agents/junior.rs`
-- Create: `crates/ceair-agent/src/agents/multimodal.rs`
-- Modify: `crates/ceair-agent/src/lib.rs`
-- Test: `crates/ceair-agent/src/agents/mod.rs` (内联测试)
+- Create: `crates/chengcoding-agent/src/agents/mod.rs`
+- Create: `crates/chengcoding-agent/src/agents/sisyphus.rs`
+- Create: `crates/chengcoding-agent/src/agents/hephaestus.rs`
+- Create: `crates/chengcoding-agent/src/agents/prometheus.rs`
+- Create: `crates/chengcoding-agent/src/agents/atlas.rs`
+- Create: `crates/chengcoding-agent/src/agents/oracle.rs`
+- Create: `crates/chengcoding-agent/src/agents/librarian.rs`
+- Create: `crates/chengcoding-agent/src/agents/explore.rs`
+- Create: `crates/chengcoding-agent/src/agents/metis.rs`
+- Create: `crates/chengcoding-agent/src/agents/momus.rs`
+- Create: `crates/chengcoding-agent/src/agents/junior.rs`
+- Create: `crates/chengcoding-agent/src/agents/multimodal.rs`
+- Modify: `crates/chengcoding-agent/src/lib.rs`
+- Test: `crates/chengcoding-agent/src/agents/mod.rs` (内联测试)
 
 每个 Agent 需要：
 - `AgentDefinition` trait: name, default_model, fallback_chain, tool_restrictions, system_prompt, order
@@ -85,9 +85,9 @@ mod tests {
 ### Task 4.2: Category 路由系统
 
 **Files:**
-- Create: `crates/ceair-agent/src/category.rs`
-- Modify: `crates/ceair-agent/src/lib.rs`
-- Test: `crates/ceair-agent/src/category.rs` (内联测试)
+- Create: `crates/chengcoding-agent/src/category.rs`
+- Modify: `crates/chengcoding-agent/src/lib.rs`
+- Test: `crates/chengcoding-agent/src/category.rs` (内联测试)
 
 Category 系统——基于意图的模型路由：
 - 8 内置类别：visual-engineering, ultrabrain, deep, artistry, quick, unspecified-low, unspecified-high, writing
@@ -127,9 +127,9 @@ fn test_category_override() {
 ### Task 4.3: Intent Gate (意图分类)
 
 **Files:**
-- Create: `crates/ceair-agent/src/intent_gate.rs`
-- Modify: `crates/ceair-agent/src/lib.rs`
-- Test: `crates/ceair-agent/src/intent_gate.rs`
+- Create: `crates/chengcoding-agent/src/intent_gate.rs`
+- Modify: `crates/chengcoding-agent/src/lib.rs`
+- Test: `crates/chengcoding-agent/src/intent_gate.rs`
 
 意图分类器——在执行前分析用户真实意图：
 - 意图类型：Research, Implementation, Investigation, Fix, Refactor, Planning, QuickFix
@@ -163,9 +163,9 @@ fn test_classify_fix_intent() {
 ### Task 4.4: 模型 Fallback 链
 
 **Files:**
-- Create: `crates/ceair-ai/src/fallback.rs`
-- Modify: `crates/ceair-ai/src/lib.rs`
-- Test: `crates/ceair-ai/src/fallback.rs`
+- Create: `crates/chengcoding-ai/src/fallback.rs`
+- Modify: `crates/chengcoding-ai/src/lib.rs`
+- Test: `crates/chengcoding-ai/src/fallback.rs`
 
 模型回退机制——当主模型不可用时自动切换：
 - `FallbackChain` 结构：有序模型列表
@@ -182,9 +182,9 @@ fn test_classify_fix_intent() {
 ### Task 5.1: Prometheus 规划工作流
 
 **Files:**
-- Create: `crates/ceair-agent/src/workflows/mod.rs`
-- Create: `crates/ceair-agent/src/workflows/prometheus.rs`
-- Modify: `crates/ceair-agent/src/lib.rs`
+- Create: `crates/chengcoding-agent/src/workflows/mod.rs`
+- Create: `crates/chengcoding-agent/src/workflows/prometheus.rs`
+- Modify: `crates/chengcoding-agent/src/lib.rs`
 
 Prometheus 工作流：
 - 访谈模式——向用户提问以澄清需求
@@ -199,7 +199,7 @@ Prometheus 工作流：
 ### Task 5.2: Atlas 执行编排
 
 **Files:**
-- Create: `crates/ceair-agent/src/workflows/atlas.rs`
+- Create: `crates/chengcoding-agent/src/workflows/atlas.rs`
 - Test: 内联测试
 
 Atlas 编排引擎：
@@ -215,7 +215,7 @@ Atlas 编排引擎：
 ### Task 5.3: Boulder 系统（会话连续性）
 
 **Files:**
-- Create: `crates/ceair-agent/src/boulder.rs`
+- Create: `crates/chengcoding-agent/src/boulder.rs`
 - Test: 内联测试
 
 Boulder 系统——追踪活跃工作状态：
@@ -229,7 +229,7 @@ Boulder 系统——追踪活跃工作状态：
 ### Task 5.4: UltraWork (ulw) 模式
 
 **Files:**
-- Create: `crates/ceair-agent/src/workflows/ultrawork.rs`
+- Create: `crates/chengcoding-agent/src/workflows/ultrawork.rs`
 - Test: 内联测试
 
 ultrawork 模式——全自动化：
@@ -245,7 +245,7 @@ ultrawork 模式——全自动化：
 ### Task 6.1: 完整 Hook 生命周期引擎
 
 **Files:**
-- Modify: `crates/ceair-agent/src/hooks.rs` (大幅扩展)
+- Modify: `crates/chengcoding-agent/src/hooks.rs` (大幅扩展)
 - Test: 内联测试
 
 扩展现有 Hook 系统以支持 40+ 生命周期钩子：
@@ -291,7 +291,7 @@ Hook 事件类型：
 ### Task 6.2: 技能注入系统扩展
 
 **Files:**
-- Modify: `crates/ceair-agent/src/skills.rs` (扩展)
+- Modify: `crates/chengcoding-agent/src/skills.rs` (扩展)
 - Test: 内联测试
 
 扩展技能系统：
@@ -307,7 +307,7 @@ Hook 事件类型：
 ### Task 6.3: Slash 命令扩展
 
 **Files:**
-- Modify: `crates/ceair-cli/src/slash_builtins.rs` (扩展)
+- Modify: `crates/chengcoding-cli/src/slash_builtins.rs` (扩展)
 - Test: 内联测试
 
 新增命令：
@@ -325,8 +325,8 @@ Hook 事件类型：
 ### Task 6.4: 权限系统
 
 **Files:**
-- Create: `crates/ceair-tools/src/permissions.rs`
-- Modify: `crates/ceair-tools/src/lib.rs`
+- Create: `crates/chengcoding-tools/src/permissions.rs`
+- Modify: `crates/chengcoding-tools/src/lib.rs`
 - Test: 内联测试
 
 工具权限系统：
@@ -342,10 +342,10 @@ Hook 事件类型：
 ### Task 7.1: Agent 间通信协议
 
 **Files:**
-- Create: `crates/ceair-mesh/src/agent_comm.rs`
-- Create: `crates/ceair-mesh/src/negotiation.rs`
-- Create: `crates/ceair-mesh/src/task_handoff.rs`
-- Modify: `crates/ceair-mesh/src/lib.rs`
+- Create: `crates/chengcoding-mesh/src/agent_comm.rs`
+- Create: `crates/chengcoding-mesh/src/negotiation.rs`
+- Create: `crates/chengcoding-mesh/src/task_handoff.rs`
+- Modify: `crates/chengcoding-mesh/src/lib.rs`
 - Test: 内联测试
 
 Sub-agent 间通信：
@@ -383,9 +383,9 @@ async fn test_task_negotiation() {
 ### Task 7.2: Zellij 集成
 
 **Files:**
-- Create: `crates/ceair-cli/src/zellij.rs`
-- Modify: `crates/ceair-cli/src/lib.rs`
-- Test: `crates/ceair-cli/src/zellij.rs`
+- Create: `crates/chengcoding-cli/src/zellij.rs`
+- Modify: `crates/chengcoding-cli/src/lib.rs`
+- Test: `crates/chengcoding-cli/src/zellij.rs`
 
 Zellij 终端复用器集成：
 - 检测 Zellij 环境（ZELLIJ_SESSION_NAME 环境变量）
@@ -406,7 +406,7 @@ fn test_detect_zellij_env() {
 #[test]
 fn test_zellij_pane_command() {
     let zellij = ZellijIntegration::new();
-    let cmd = zellij.build_new_pane_command("ceair agent run", Some("Agent-1"));
+    let cmd = zellij.build_new_pane_command("ChengCoding agent run", Some("Agent-1"));
     assert!(cmd.contains("zellij action new-pane"));
 }
 ```
@@ -418,9 +418,9 @@ fn test_zellij_pane_command() {
 ### Task 8.1: Codex OAuth 认证
 
 **Files:**
-- Create: `crates/ceair-cli/src/oauth.rs`
-- Create: `crates/ceair-cli/src/commands/mcp_oauth.rs`
-- Modify: `crates/ceair-cli/src/commands/mod.rs`
+- Create: `crates/chengcoding-cli/src/oauth.rs`
+- Create: `crates/chengcoding-cli/src/commands/mcp_oauth.rs`
+- Modify: `crates/chengcoding-cli/src/commands/mod.rs`
 - Test: 内联测试
 
 OAuth 2.1 认证流程：
@@ -438,8 +438,8 @@ OAuth 2.1 认证流程：
 ### Task 8.2: JSONC 配置解析
 
 **Files:**
-- Create: `crates/ceair-config/src/jsonc.rs`
-- Modify: `crates/ceair-config/src/config.rs`
+- Create: `crates/chengcoding-config/src/jsonc.rs`
+- Modify: `crates/chengcoding-config/src/config.rs`
 - Test: 内联测试
 
 JSONC 配置支持：
@@ -455,14 +455,14 @@ JSONC 配置支持：
 ### Task 8.3: 扩展工具集
 
 **Files:**
-- Create: `crates/ceair-tools/src/call_omo_agent.rs` — 子 agent 调用工具
-- Create: `crates/ceair-tools/src/background_tool.rs` — 后台任务管理（background_output, background_cancel）
-- Create: `crates/ceair-tools/src/look_at_tool.rs` — 多模态分析工具
-- Create: `crates/ceair-tools/src/session_tools.rs` — 会话工具（session_list, session_read, session_search, session_info）
-- Create: `crates/ceair-tools/src/task_management.rs` — 任务管理工具（task_create, task_get, task_list, task_update）
-- Create: `crates/ceair-tools/src/skill_tool.rs` — 技能工具（skill, skill_mcp）
-- Create: `crates/ceair-tools/src/interactive_bash.rs` — 交互式终端工具
-- Modify: `crates/ceair-tools/src/registry.rs`
+- Create: `crates/chengcoding-tools/src/call_omo_agent.rs` — 子 agent 调用工具
+- Create: `crates/chengcoding-tools/src/background_tool.rs` — 后台任务管理（background_output, background_cancel）
+- Create: `crates/chengcoding-tools/src/look_at_tool.rs` — 多模态分析工具
+- Create: `crates/chengcoding-tools/src/session_tools.rs` — 会话工具（session_list, session_read, session_search, session_info）
+- Create: `crates/chengcoding-tools/src/task_management.rs` — 任务管理工具（task_create, task_get, task_list, task_update）
+- Create: `crates/chengcoding-tools/src/skill_tool.rs` — 技能工具（skill, skill_mcp）
+- Create: `crates/chengcoding-tools/src/interactive_bash.rs` — 交互式终端工具
+- Modify: `crates/chengcoding-tools/src/registry.rs`
 - Test: 各工具内联测试
 
 ---
@@ -470,7 +470,7 @@ JSONC 配置支持：
 ### Task 8.4: Hashline 编辑工具增强
 
 **Files:**
-- Modify: `crates/ceair-agent/src/hashline.rs`
+- Modify: `crates/chengcoding-agent/src/hashline.rs`
 - Test: 内联测试
 
 LINE#ID 内容哈希锚定编辑：

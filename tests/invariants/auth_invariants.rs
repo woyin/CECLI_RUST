@@ -8,11 +8,11 @@ use std::sync::Arc;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use ceair_control_server::auth::LocalAuth;
-use ceair_control_server::routes::build_router;
-use ceair_control_server::worker_registry::WorkerRegistry;
-use ceair_control_server::ws::WsQuery;
-use ceair_worker::WorkerRuntime;
+use chengcoding_control_server::auth::LocalAuth;
+use chengcoding_control_server::routes::build_router;
+use chengcoding_control_server::worker_registry::WorkerRegistry;
+use chengcoding_control_server::ws::WsQuery;
+use chengcoding_worker::WorkerRuntime;
 use tower::ServiceExt;
 
 fn setup() -> (axum::Router, LocalAuth, Arc<WorkerRuntime>) {

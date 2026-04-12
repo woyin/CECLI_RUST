@@ -1,6 +1,6 @@
 # 工具参考手册
 
-> CEAIR 工具系统完整参考文档。所有工具均实现 `Tool` trait，通过 `ToolRegistry` 统一管理。
+> ChengCoding 工具系统完整参考文档。所有工具均实现 `Tool` trait，通过 `ToolRegistry` 统一管理。
 
 ## 目录
 
@@ -52,7 +52,7 @@
 
 ## 概述
 
-CEAIR 的工具系统基于 `ceair-tools` crate 实现，提供了一套统一的工具接口。所有工具均实现以下核心 trait：
+ChengCoding 的工具系统基于 `chengcoding-tools` crate 实现，提供了一套统一的工具接口。所有工具均实现以下核心 trait：
 
 ```rust
 #[async_trait]
@@ -126,7 +126,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 读取文件内容。支持文本文件和二进制文件（Base64 编码返回）。
 
-**源文件**: `crates/ceair-tools/src/edit_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/edit_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -162,7 +162,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 创建或覆盖写入文件。
 
-**源文件**: `crates/ceair-tools/src/edit_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/edit_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -193,7 +193,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 对现有文件进行精确编辑。支持基于旧文本/新文本的替换操作。
 
-**源文件**: `crates/ceair-tools/src/edit_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/edit_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -214,7 +214,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 {
   "path": "src/main.rs",
   "old_text": "fn main() {\n    println!(\"Hello\");\n}",
-  "new_text": "fn main() {\n    println!(\"Hello, CEAIR!\");\n}"
+  "new_text": "fn main() {\n    println!(\"Hello, ChengCoding!\");\n}"
 }
 ```
 
@@ -226,7 +226,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 在系统 Shell 中执行命令。
 
-**源文件**: `crates/ceair-tools/src/bash_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/bash_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -269,7 +269,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 在文件中搜索正则表达式模式。基于 `regex` crate 实现高性能搜索。
 
-**源文件**: `crates/ceair-tools/src/grep_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/grep_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -309,7 +309,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 按文件名和属性搜索文件。基于 `walkdir` 和 `glob` crate 实现。
 
-**源文件**: `crates/ceair-tools/src/find_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/find_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -347,7 +347,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 模拟浏览器访问网页并提取内容。
 
-**源文件**: `crates/ceair-tools/src/browser_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/browser_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -378,7 +378,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 执行网络搜索并返回结果摘要。
 
-**源文件**: `crates/ceair-tools/src/web_search_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/web_search_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -404,7 +404,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 发送 HTTP 请求并获取响应。基于 `reqwest` crate 实现。
 
-**源文件**: `crates/ceair-tools/src/fetch_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/fetch_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -442,7 +442,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 与语言服务器协议（Language Server Protocol）交互。
 
-**源文件**: `crates/ceair-tools/src/lsp_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/lsp_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -493,7 +493,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 基于 AST（抽象语法树）的代码搜索和转换。
 
-**源文件**: `crates/ceair-tools/src/ast_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/ast_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -532,7 +532,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 执行 Python 代码片段。
 
-**源文件**: `crates/ceair-tools/src/python_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/python_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -545,7 +545,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 ```json
 {
-  "code": "import json\ndata = {'name': 'ceair', 'version': '0.1.0'}\nprint(json.dumps(data, indent=2))"
+  "code": "import json\ndata = {'name': 'ChengCoding', 'version': '0.1.0'}\nprint(json.dumps(data, indent=2))"
 }
 ```
 
@@ -555,7 +555,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 操作 Jupyter Notebook（`.ipynb` 文件）。
 
-**源文件**: `crates/ceair-tools/src/notebook_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/notebook_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -593,7 +593,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 向用户提出问题并等待回答。用于需要用户确认或输入的场景。
 
-**源文件**: `crates/ceair-tools/src/ask_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/ask_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -625,7 +625,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 执行数学计算表达式。
 
-**源文件**: `crates/ceair-tools/src/calc_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/calc_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -656,7 +656,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 通过 SSH 在远程服务器上执行命令。
 
-**源文件**: `crates/ceair-tools/src/ssh_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/ssh_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -692,7 +692,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 管理待办事项列表。
 
-**源文件**: `crates/ceair-tools/src/todo_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/todo_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|
@@ -734,7 +734,7 @@ pub type ToolResult<T> = Result<T, ToolError>;
 
 创建并管理子 Agent 任务。允许当前 Agent 委派任务给其他 Agent。
 
-**源文件**: `crates/ceair-tools/src/task_tool.rs`
+**源文件**: `crates/chengcoding-tools/src/task_tool.rs`
 
 | 参数 | 类型 | 必需 | 描述 |
 |------|------|------|------|

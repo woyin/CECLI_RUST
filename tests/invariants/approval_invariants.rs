@@ -3,8 +3,8 @@
 //! INV-APPROVAL-01: 审批请求必须可等待
 //! INV-APPROVAL-02: 审批结果必须送达请求方
 
-use ceair_control_protocol::{ApprovalDecision, RiskLevel};
-use ceair_worker::ApprovalBridge;
+use chengcoding_control_protocol::{ApprovalDecision, RiskLevel};
+use chengcoding_worker::ApprovalBridge;
 
 // =========================================================================
 // INV-APPROVAL-01: 审批请求必须可等待
