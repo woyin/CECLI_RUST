@@ -15,11 +15,7 @@ pub fn execute_builtin(name: &str, args: &str) -> SlashCommandResult {
         "model" | "models" => SlashCommandResult::Prompt(format_model_selector()),
         "plan" => SlashCommandResult::Executed,
         "compact" => {
-            let focus = if args.is_empty() {
-                None
-            } else {
-                Some(args)
-            };
+            let focus = if args.is_empty() { None } else { Some(args) };
             SlashCommandResult::Prompt(format_compact(focus))
         }
         "new" => SlashCommandResult::Executed,
@@ -42,6 +38,10 @@ pub fn execute_builtin(name: &str, args: &str) -> SlashCommandResult {
         "start-work" => SlashCommandResult::Prompt(format_start_work(args)),
         "stop-continuation" => SlashCommandResult::Executed,
         "handoff" => SlashCommandResult::Prompt(format_handoff(args)),
+        // Autopilot 长任务全自动模式命令
+        "autopilot" => SlashCommandResult::Prompt(format_autopilot(args)),
+        "autopilot-stop" => SlashCommandResult::Executed,
+        "autopilot-status" => SlashCommandResult::Prompt(format_autopilot_status()),
         _ => SlashCommandResult::NotFound(name.to_string()),
     }
 }
@@ -84,6 +84,11 @@ ChengCoding 斜杠命令帮助
   /start-work     开始新工作会话
   /stop-continuation 停止自动循环
   /handoff        任务交接
+
+Autopilot:
+  /autopilot [需求] 启动长任务全自动模式
+  /autopilot-stop  停止 Autopilot 循环
+  /autopilot-status 查看 Autopilot 状态
 
 退出:
   /exit           退出
@@ -157,10 +162,7 @@ fn format_ulw_loop(args: &str) -> String {
     } else {
         args.to_string()
     };
-    format!(
-        "UltraWork 全自动循环已启动\n配置: {}",
-        config
-    )
+    format!("UltraWork 全自动循环已启动\n配置: {}", config)
 }
 
 /// 格式化重构助手提示
@@ -210,6 +212,26 @@ fn format_debug() -> String {
         std::env::consts::OS,
         std::env::consts::ARCH,
     )
+}
+
+fn format_autopilot(args: &str) -> String {
+    let requirement = if args.is_empty() {
+        "未指定需求（将在首次交互中收集）".to_string()
+    } else {
+        args.to_string()
+    };
+    format!(
+        "🚀 Autopilot 长任务全自动模式已启动\n\
+         需求: {}\n\
+         循环流程: Plan → Execute → Verify → Replan\n\
+         使用 /autopilot-stop 可随时停止\n\
+         使用 /autopilot-status 查看进度",
+        requirement
+    )
+}
+
+fn format_autopilot_status() -> String {
+    "Autopilot 状态: 未运行".to_string()
 }
 
 // ============================================================
@@ -421,6 +443,61 @@ mod tests {
             SlashCommandResult::Prompt(text) => {
                 assert!(text.contains("任务交接"));
                 assert!(text.contains("reviewer-agent"));
+            }
+            other => panic!("期望 Prompt，得到 {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_execute_autopilot() {
+        let result = execute_builtin("autopilot", "实现用户认证系统");
+        match result {
+            SlashCommandResult::Prompt(text) => {
+                assert!(text.contains("Autopilot"));
+                assert!(text.contains("实现用户认证系统"));
+                assert!(text.contains("Plan → Execute → Verify → Replan"));
+            }
+            other => panic!("期望 Prompt，得到 {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_execute_autopilot_no_args() {
+        let result = execute_builtin("autopilot", "");
+        match result {
+            SlashCommandResult::Prompt(text) => {
+                assert!(text.contains("Autopilot"));
+                assert!(text.contains("未指定需求"));
+            }
+            other => panic!("期望 Prompt，得到 {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_execute_autopilot_stop() {
+        let result = execute_builtin("autopilot-stop", "");
+        assert!(matches!(result, SlashCommandResult::Executed));
+    }
+
+    #[test]
+    fn test_execute_autopilot_status() {
+        let result = execute_builtin("autopilot-status", "");
+        match result {
+            SlashCommandResult::Prompt(text) => {
+                assert!(text.contains("Autopilot"));
+            }
+            other => panic!("期望 Prompt，得到 {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_help_contains_autopilot() {
+        let result = execute_builtin("help", "");
+        match result {
+            SlashCommandResult::Prompt(text) => {
+                assert!(text.contains("/autopilot"));
+                assert!(text.contains("/autopilot-stop"));
+                assert!(text.contains("/autopilot-status"));
             }
             other => panic!("期望 Prompt，得到 {:?}", other),
         }

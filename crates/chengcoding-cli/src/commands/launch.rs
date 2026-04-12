@@ -27,6 +27,7 @@ use chengcoding_tui::App;
 /// - 直接提供 prompt 进行单次任务
 /// - 选择 AI 模型和提供商
 /// - 启用交互模式或禁用 TUI
+/// - 启用 Autopilot 长任务全自动模式
 #[derive(Args, Debug)]
 pub struct LaunchArgs {
     /// 要执行的任务描述（可选，不提供时进入交互模式）
@@ -48,6 +49,33 @@ pub struct LaunchArgs {
     /// 禁用 TUI 界面，使用纯文本输出
     #[arg(long, default_value_t = false)]
     pub no_tui: bool,
+
+    /// 启用 Autopilot 长任务全自动模式
+    ///
+    /// 系统将自动执行 Plan → Execute → Verify → Replan 循环，
+    /// 直到所有任务完成或达到最大循环轮次。
+    #[arg(long)]
+    pub autopilot: bool,
+
+    /// Autopilot 模式的需求文件路径（替代 --autopilot 后直接跟 prompt）
+    #[arg(long)]
+    pub autopilot_file: Option<String>,
+
+    /// Autopilot 最大循环轮次（覆盖配置文件设置）
+    #[arg(long)]
+    pub max_cycles: Option<u32>,
+
+    /// Autopilot 严格验证模式：所有验收标准必须通过
+    #[arg(long, default_value_t = false)]
+    pub verify_strict: bool,
+
+    /// Autopilot 每轮结束后暂停等待用户确认
+    #[arg(long, default_value_t = false)]
+    pub pause_between_cycles: bool,
+
+    /// Autopilot 禁用自动测试运行
+    #[arg(long, default_value_t = false)]
+    pub no_auto_test: bool,
 }
 
 // ============================================================

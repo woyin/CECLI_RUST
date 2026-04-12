@@ -151,6 +151,59 @@ impl Default for TuiConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Autopilot（长任务全自动模式）配置
+// ---------------------------------------------------------------------------
+
+/// Autopilot 长任务全自动模式配置
+///
+/// 控制 Plan → Execute → Verify → Replan 循环的行为参数。
+/// 可通过 CLI 参数（--autopilot）或斜杠命令（/autopilot）覆盖。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
+pub struct AutopilotConfig {
+    /// 最大循环轮次（默认 10），超过后进入 Failed 状态
+    pub max_cycles: u32,
+
+    /// 严格验证模式：所有验收标准必须通过 + 测试全部通过
+    pub verify_strict: bool,
+
+    /// 每个任务内部的 AI 最大迭代次数
+    pub task_max_iterations: u32,
+
+    /// 每个任务超时秒数
+    pub task_timeout_secs: u64,
+
+    /// 每轮结束后暂停等待用户确认
+    pub pause_between_cycles: bool,
+
+    /// 是否自动运行测试（cargo test）
+    pub auto_run_tests: bool,
+
+    /// 自定义验证命令（覆盖默认的 cargo test）
+    #[serde(default)]
+    pub verify_commands: Vec<String>,
+
+    /// 每轮完成后是否自动 git commit
+    pub auto_commit_per_cycle: bool,
+}
+
+/// 为 `AutopilotConfig` 提供合理的默认值
+impl Default for AutopilotConfig {
+    fn default() -> Self {
+        Self {
+            max_cycles: 10,
+            verify_strict: false,
+            task_max_iterations: 30,
+            task_timeout_secs: 600,
+            pause_between_cycles: false,
+            auto_run_tests: true,
+            verify_commands: vec![],
+            auto_commit_per_cycle: false,
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // 日志配置
 // ---------------------------------------------------------------------------
 
@@ -206,6 +259,10 @@ pub struct CeairConfig {
     /// 日志记录配置
     #[serde(default)]
     pub logging: LoggingConfig,
+
+    /// Autopilot 长任务全自动模式配置
+    #[serde(default)]
+    pub autopilot: AutopilotConfig,
 }
 
 /// 为 `CeairConfig` 提供默认值，各子配置均使用自己的默认值
@@ -217,6 +274,7 @@ impl Default for CeairConfig {
             tools: ToolsConfig::default(),
             tui: TuiConfig::default(),
             logging: LoggingConfig::default(),
+            autopilot: AutopilotConfig::default(),
         }
     }
 }
@@ -484,6 +542,16 @@ mod tests {
         assert_eq!(config.logging.level, "info");
         assert!(config.logging.file.is_none());
         assert!(!config.logging.json_format);
+
+        // 验证 Autopilot 配置默认值
+        assert_eq!(config.autopilot.max_cycles, 10);
+        assert!(!config.autopilot.verify_strict);
+        assert_eq!(config.autopilot.task_max_iterations, 30);
+        assert_eq!(config.autopilot.task_timeout_secs, 600);
+        assert!(!config.autopilot.pause_between_cycles);
+        assert!(config.autopilot.auto_run_tests);
+        assert!(config.autopilot.verify_commands.is_empty());
+        assert!(!config.autopilot.auto_commit_per_cycle);
     }
 
     /// 测试 TOML 序列化与反序列化的往返一致性

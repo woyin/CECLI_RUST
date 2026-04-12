@@ -69,6 +69,54 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
         }),
 
         AgentEvent::MessageReceived { .. } => None,
+
+        AgentEvent::AutopilotPhaseChanged { phase, cycle, .. } => Some(ServerEvent::AgentStatus {
+            session_id: sid,
+            status: format!("autopilot_phase_{}", phase),
+            message: Some(format!("Autopilot 第{}轮: {}", cycle, phase)),
+            timestamp: now,
+        }),
+
+        AgentEvent::AutopilotTaskCompleted {
+            task_id, success, ..
+        } => Some(ServerEvent::AgentStatus {
+            session_id: sid,
+            status: if *success {
+                "task_completed"
+            } else {
+                "task_failed"
+            }
+            .to_string(),
+            message: Some(format!(
+                "任务 {}: {}",
+                task_id,
+                if *success { "成功" } else { "失败" }
+            )),
+            timestamp: now,
+        }),
+
+        AgentEvent::AutopilotCycleComplete {
+            cycle,
+            tasks_completed,
+            tasks_failed,
+            verification_passed,
+            ..
+        } => Some(ServerEvent::AgentStatus {
+            session_id: sid,
+            status: "autopilot_cycle_complete".to_string(),
+            message: Some(format!(
+                "第{}轮完成: {}成功/{}失败 验证{}",
+                cycle,
+                tasks_completed,
+                tasks_failed,
+                if *verification_passed {
+                    "通过"
+                } else {
+                    "未通过"
+                }
+            )),
+            timestamp: now,
+        }),
     }
 }
 
