@@ -350,7 +350,15 @@ impl ConfigManager {
     /// 遵循 XDG 规范，不使用 macOS 的 `~/Library/Application Support`。
     fn resolve_config_dir() -> chengcoding_core::Result<PathBuf> {
         let home = dirs::home_dir().ok_or_else(|| CeairError::config("无法确定用户主目录"))?;
-        Ok(home.join(".config").join("chenagent"))
+        let new_dir = home.join(".config").join("chenagent");
+        if new_dir.exists() {
+            return Ok(new_dir);
+        }
+        let legacy_dir = home.join(".config").join("ceair");
+        if legacy_dir.exists() {
+            return Ok(legacy_dir);
+        }
+        Ok(new_dir)
     }
 
     /// 从磁盘加载配置文件

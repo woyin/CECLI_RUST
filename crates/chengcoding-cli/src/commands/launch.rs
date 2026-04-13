@@ -412,7 +412,7 @@ async fn run_tui_mode(
 
     // 构建工具定义和请求选项
     let tools = build_tool_definitions(&registry);
-    let options = ChatOptions::with_model(model_name)
+    let mut options = ChatOptions::with_model(model_name)
         .temperature(config.ai.temperature)
         .max_tokens(config.ai.max_tokens);
 
@@ -452,31 +452,86 @@ async fn run_tui_mode(
                         // 构建 AI 请求
                         messages.push(ChatMessage::user(&text));
 
-                        // 发送请求并处理响应
-                        match provider.chat_completion(&messages, &tools, &options).await {
-                            Ok(response) => {
-                                let content = response.content.clone();
-                                app.add_message(Role::Assistant, &content);
-                                messages.push(ChatMessage::assistant(&content));
+                        // 智能体循环：支持多轮工具调用
+                        let max_iterations = config.agent.max_iterations;
+                        for iteration in 0..max_iterations {
+                            let response = match provider
+                                .chat_completion(&messages, &tools, &options)
+                                .await
+                            {
+                                Ok(resp) => resp,
+                                Err(e) => {
+                                    app.add_message(
+                                        Role::System,
+                                        format!("⚠️ AI 请求失败: {}。请重试。", e),
+                                    );
+                                    app.status.status_text = "错误 - 请重试".to_string();
+                                    warn!("AI 请求失败: {:?}", e);
+                                    break;
+                                }
+                            };
 
-                                // 更新 token 使用量
-                                app.status.token_count += response.usage.total_tokens as u64;
-                                app.status.status_text = "就绪".to_string();
+                            // 处理工具调用
+                            if !response.tool_calls.is_empty() {
+                                // 记录 AI 的工具调用响应
+                                messages.push(ChatMessage {
+                                    role: chengcoding_ai::MessageRole::Assistant,
+                                    content: if response.content.is_empty() {
+                                        None
+                                    } else {
+                                        Some(response.content.clone())
+                                    },
+                                    tool_call_id: None,
+                                    tool_calls: Some(response.tool_calls.clone()),
+                                    name: None,
+                                });
+
+                                // 执行每个工具调用
+                                for tool_call in &response.tool_calls {
+                                    let tool_name = &tool_call.function.name;
+                                    app.add_message(
+                                        Role::System,
+                                        format!("🔧 调用工具: {}", tool_name),
+                                    );
+
+                                    let params: serde_json::Value =
+                                        serde_json::from_str(&tool_call.function.arguments)
+                                            .unwrap_or(serde_json::Value::Object(Default::default()));
+
+                                    let tool_result =
+                                        match registry.execute(tool_name, params).await {
+                                            Ok(output) => output,
+                                            Err(e) => format!("工具执行错误: {}", e),
+                                        };
+
+                                    messages
+                                        .push(ChatMessage::tool_result(&tool_call.id, &tool_result));
+                                }
+
+                                // 更新状态并继续循环
+                                app.status.status_text =
+                                    format!("执行工具中... (迭代 {}/{})", iteration + 1, max_iterations);
+                                let _ = terminal.draw(|frame| {
+                                    MainLayout::render(frame, &app);
+                                });
+                                continue;
                             }
-                            Err(e) => {
-                                // 错误路径即主路径 — 显示错误但不崩溃
-                                app.add_message(
-                                    Role::System,
-                                    format!("⚠️ AI 请求失败: {}。请重试。", e),
-                                );
-                                app.status.status_text = "错误 - 请重试".to_string();
-                                warn!("AI 请求失败: {:?}", e);
-                            }
+
+                            // AI 返回最终回答（无工具调用）
+                            let content = response.content.clone();
+                            app.add_message(Role::Assistant, &content);
+                            messages.push(ChatMessage::assistant(&content));
+
+                            // 更新 token 使用量
+                            app.status.token_count += response.usage.total_tokens as u64;
+                            app.status.status_text = "就绪".to_string();
+                            break;
                         }
                     }
                     AppAction::SlashCommand { name, args } => {
-                        // 处理斜杠命令
-                        handle_slash_command(&mut app, &name, &args);
+                        if handle_slash_command(&mut app, &mut options, &name, &args) {
+                            messages.clear();
+                        }
                     }
                     AppAction::SwitchInteractionMode(mode) => {
                         app.add_message(
@@ -513,7 +568,7 @@ async fn run_tui_mode(
 /// 处理斜杠命令
 ///
 /// 在 TUI 中执行用户输入的斜杠命令，更新应用状态并显示反馈。
-fn handle_slash_command(app: &mut App, name: &str, args: &str) {
+fn handle_slash_command(app: &mut App, options: &mut ChatOptions, name: &str, args: &str) -> bool {
     use chengcoding_tui::app::{InteractionMode, ThinkingDepth};
 
     match name {
@@ -528,6 +583,7 @@ fn handle_slash_command(app: &mut App, name: &str, args: &str) {
                 );
             } else {
                 app.status.model_name = args.to_string();
+                options.model = args.to_string();
                 app.add_message(Role::System, format!("模型已切换为: {}", args));
             }
         }
@@ -585,6 +641,7 @@ fn handle_slash_command(app: &mut App, name: &str, args: &str) {
         "clear" | "cls" => {
             app.messages.clear();
             app.scroll_offset = 0;
+            return true;
         }
         "help" | "h" => {
             app.add_message(
@@ -610,6 +667,7 @@ fn handle_slash_command(app: &mut App, name: &str, args: &str) {
             );
         }
     }
+    false
 }
 
 // ============================================================

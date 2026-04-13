@@ -29,7 +29,11 @@ use tracing::{error, info};
                   直接运行 chengcoding 即等同于 chengcoding launch。"
 )]
 struct Cli {
-    /// 子命令（不指定时默认执行 launch）
+    /// 启动参数（无子命令时直接生效，等同于 chengcoding launch）
+    #[command(flatten)]
+    launch_args: commands::launch::LaunchArgs,
+
+    /// 子命令
     #[command(subcommand)]
     command: Option<Commands>,
 
@@ -128,18 +132,24 @@ async fn main() -> Result<()> {
     let shutdown_signal = tokio::signal::ctrl_c();
     tokio::pin!(shutdown_signal);
 
-    // 根据子命令分发执行（未指定子命令时默认为 launch）
-    let command = cli
-        .command
-        .unwrap_or(Commands::Launch(commands::launch::LaunchArgs::default()));
-    let result = tokio::select! {
-        // 正常执行子命令
-        result = dispatch_command(command, config, config_manager) => result,
-        // 收到 Ctrl+C 信号，执行优雅退出
-        _ = &mut shutdown_signal => {
-            info!("收到中断信号，正在优雅退出...");
-            println!("\n收到中断信号，正在退出...");
-            Ok(())
+    // 根据子命令分发执行（未指定子命令时使用顶层 launch 参数）
+    let result = if let Some(cmd) = cli.command {
+        tokio::select! {
+            result = dispatch_command(cmd, config, config_manager) => result,
+            _ = &mut shutdown_signal => {
+                info!("收到中断信号，正在优雅退出...");
+                println!("\n收到中断信号，正在退出...");
+                Ok(())
+            }
+        }
+    } else {
+        tokio::select! {
+            result = commands::launch::execute(cli.launch_args, config) => result,
+            _ = &mut shutdown_signal => {
+                info!("收到中断信号，正在优雅退出...");
+                println!("\n收到中断信号，正在退出...");
+                Ok(())
+            }
         }
     };
 

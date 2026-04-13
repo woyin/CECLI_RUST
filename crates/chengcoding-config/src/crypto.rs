@@ -101,8 +101,15 @@ impl CryptoStore {
     /// 存储文件位于 ~/.config/chenagent/secrets.json
     pub fn default_store() -> chengcoding_core::Result<Self> {
         let home = dirs::home_dir().ok_or_else(|| CeairError::config("无法确定用户主目录"))?;
-        let store_path = home.join(".config").join("chenagent").join("secrets.json");
-        Ok(Self::new(store_path))
+        let new_path = home.join(".config").join("chenagent").join("secrets.json");
+        if new_path.exists() {
+            return Ok(Self::new(new_path));
+        }
+        let legacy_path = home.join(".config").join("ceair").join("secrets.json");
+        if legacy_path.exists() {
+            return Ok(Self::new(legacy_path));
+        }
+        Ok(Self::new(new_path))
     }
 
     /// 使用 PBKDF2 从口令派生 AES-256 密钥
