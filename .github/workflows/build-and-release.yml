@@ -39,6 +39,15 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ matrix.target }}-cargo-
+
       - name: Install build dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -51,25 +60,13 @@ jobs:
           mkdir -p .cargo
           printf '[target.aarch64-unknown-linux-gnu]\nlinker = "aarch64-linux-gnu-gcc"\n' > .cargo/config.toml
 
-      - name: Cache cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ matrix.target }}-cargo-
-
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} --locked
 
-      - name: Strip binary (Linux)
-        if: runner.os == 'Linux'
-        run: strip target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}
+      - name: Verify binary exists
+        run: ls -lh target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}
 
-      - name: Strip binary (macOS)
-        if: runner.os == 'macOS'
+      - name: Strip binary
         run: strip target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}
 
       - name: Package artifact
