@@ -455,21 +455,19 @@ async fn run_tui_mode(
                         // 智能体循环：支持多轮工具调用
                         let max_iterations = config.agent.max_iterations;
                         for iteration in 0..max_iterations {
-                            let response = match provider
-                                .chat_completion(&messages, &tools, &options)
-                                .await
-                            {
-                                Ok(resp) => resp,
-                                Err(e) => {
-                                    app.add_message(
-                                        Role::System,
-                                        format!("⚠️ AI 请求失败: {}。请重试。", e),
-                                    );
-                                    app.status.status_text = "错误 - 请重试".to_string();
-                                    warn!("AI 请求失败: {:?}", e);
-                                    break;
-                                }
-                            };
+                            let response =
+                                match provider.chat_completion(&messages, &tools, &options).await {
+                                    Ok(resp) => resp,
+                                    Err(e) => {
+                                        app.add_message(
+                                            Role::System,
+                                            format!("⚠️ AI 请求失败: {}。请重试。", e),
+                                        );
+                                        app.status.status_text = "错误 - 请重试".to_string();
+                                        warn!("AI 请求失败: {:?}", e);
+                                        break;
+                                    }
+                                };
 
                             // 处理工具调用
                             if !response.tool_calls.is_empty() {
@@ -496,7 +494,9 @@ async fn run_tui_mode(
 
                                     let params: serde_json::Value =
                                         serde_json::from_str(&tool_call.function.arguments)
-                                            .unwrap_or(serde_json::Value::Object(Default::default()));
+                                            .unwrap_or(serde_json::Value::Object(
+                                                Default::default(),
+                                            ));
 
                                     let tool_result =
                                         match registry.execute(tool_name, params).await {
@@ -504,13 +504,18 @@ async fn run_tui_mode(
                                             Err(e) => format!("工具执行错误: {}", e),
                                         };
 
-                                    messages
-                                        .push(ChatMessage::tool_result(&tool_call.id, &tool_result));
+                                    messages.push(ChatMessage::tool_result(
+                                        &tool_call.id,
+                                        &tool_result,
+                                    ));
                                 }
 
                                 // 更新状态并继续循环
-                                app.status.status_text =
-                                    format!("执行工具中... (迭代 {}/{})", iteration + 1, max_iterations);
+                                app.status.status_text = format!(
+                                    "执行工具中... (迭代 {}/{})",
+                                    iteration + 1,
+                                    max_iterations
+                                );
                                 let _ = terminal.draw(|frame| {
                                     MainLayout::render(frame, &app);
                                 });
