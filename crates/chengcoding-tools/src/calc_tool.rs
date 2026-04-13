@@ -515,7 +515,7 @@ mod tests {
     /// 测试格式化小数结果
     #[test]
     fn test_format_result_decimal() {
-        let formatted = CalcTool::format_result(3.14159);
+        let formatted = CalcTool::format_result(std::f64::consts::PI);
         assert!(formatted.starts_with("3.14159"));
     }
 
