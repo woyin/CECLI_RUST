@@ -98,12 +98,12 @@ impl CryptoStore {
 
     /// 从默认配置目录创建加密存储器
     ///
-    /// 存储文件位于 ~/.config/ceair/secrets.json
+    /// 存储文件位于 ~/.config/chenagent/secrets.json
     pub fn default_store() -> chengcoding_core::Result<Self> {
         let config_dir = dirs::config_dir().ok_or_else(|| {
             CeairError::config("无法确定系统配置目录")
         })?;
-        let store_path = config_dir.join("ceair").join("secrets.json");
+        let store_path = config_dir.join("chenagent").join("secrets.json");
         Ok(Self::new(store_path))
     }
 

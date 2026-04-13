@@ -262,8 +262,7 @@ impl PrometheusWorkflow {
 
     /// 执行放行检查，若访谈完整则自动推进到 PlanGeneration
     pub fn perform_clearance_check(&mut self) -> Result<(), Vec<&'static str>> {
-        if self.phase != PrometheusPhase::Interview
-            && self.phase != PrometheusPhase::ClearanceCheck
+        if self.phase != PrometheusPhase::Interview && self.phase != PrometheusPhase::ClearanceCheck
         {
             return Ok(());
         }
@@ -344,11 +343,7 @@ impl PrometheusWorkflow {
                 self.phase = PrometheusPhase::MomusReview;
             }
             PrometheusPhase::MomusReview => {
-                if self
-                    .plan
-                    .as_ref()
-                    .map_or(false, |p| p.verified_by_momus)
-                {
+                if self.plan.as_ref().map_or(false, |p| p.verified_by_momus) {
                     self.phase = PrometheusPhase::Done;
                 }
             }
@@ -587,8 +582,7 @@ mod tests {
     fn 序列化反序列化计划文档() {
         let plan = sample_plan();
         let json = serde_json::to_string(&plan).expect("序列化失败");
-        let deserialized: PlanDocument =
-            serde_json::from_str(&json).expect("反序列化失败");
+        let deserialized: PlanDocument = serde_json::from_str(&json).expect("反序列化失败");
         assert_eq!(plan, deserialized);
     }
 }

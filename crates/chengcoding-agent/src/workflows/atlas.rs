@@ -201,8 +201,7 @@ impl AtlasOrchestrator {
             // 检查所有依赖是否已完成
             let deps_met = task.depends_on.iter().all(|dep_id| {
                 plan.tasks.iter().enumerate().any(|(j, t)| {
-                    t.id == *dep_id
-                        && self.task_statuses.get(j) == Some(&TaskStatus::Completed)
+                    t.id == *dep_id && self.task_statuses.get(j) == Some(&TaskStatus::Completed)
                 })
             });
 
@@ -227,20 +226,13 @@ impl AtlasOrchestrator {
             task_id: task.id.clone(),
             category: category.into(),
             skills,
-            prompt: format!(
-                "执行任务「{}」：{}",
-                task.title, task.description
-            ),
+            prompt: format!("执行任务「{}」：{}", task.title, task.description),
             context: task.file_references.clone(),
         })
     }
 
     /// 记录任务执行结果并推进
-    pub fn verify_result(
-        &mut self,
-        task_index: usize,
-        success: bool,
-    ) -> bool {
+    pub fn verify_result(&mut self, task_index: usize, success: bool) -> bool {
         if task_index >= self.task_statuses.len() {
             return false;
         }
@@ -287,10 +279,7 @@ impl AtlasOrchestrator {
 
     /// 生成执行报告
     pub fn generate_report(&self) -> String {
-        let plan_name = self
-            .active_plan
-            .as_ref()
-            .map_or("无计划", |p| &p.name);
+        let plan_name = self.active_plan.as_ref().map_or("无计划", |p| &p.name);
 
         let total = self.task_statuses.len();
         let completed = self
@@ -319,9 +308,9 @@ impl AtlasOrchestrator {
 
     /// 所有任务是否已完成或失败（无待执行任务）
     pub fn is_all_done(&self) -> bool {
-        self.task_statuses
-            .iter()
-            .all(|s| *s == TaskStatus::Completed || *s == TaskStatus::Failed || *s == TaskStatus::Skipped)
+        self.task_statuses.iter().all(|s| {
+            *s == TaskStatus::Completed || *s == TaskStatus::Failed || *s == TaskStatus::Skipped
+        })
     }
 }
 

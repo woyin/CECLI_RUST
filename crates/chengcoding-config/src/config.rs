@@ -320,7 +320,7 @@ pub struct ConfigManager {
 impl ConfigManager {
     /// 创建新的配置管理器
     ///
-    /// 自动检测 XDG 配置目录（~/.config/ceair/），如果不存在则创建。
+    /// 自动检测 XDG 配置目录（~/.config/chenagent/），如果不存在则创建。
     pub fn new() -> chengcoding_core::Result<Self> {
         let config_dir = Self::resolve_config_dir()?;
         let config_path = config_dir.join("config.toml");
@@ -348,12 +348,12 @@ impl ConfigManager {
     /// 解析 XDG 配置目录路径
     ///
     /// 优先使用 `dirs::config_dir()`（通常为 ~/.config），
-    /// 然后拼接 "ceair" 子目录。
+    /// 然后拼接 "chenagent" 子目录。
     fn resolve_config_dir() -> chengcoding_core::Result<PathBuf> {
         let base = dirs::config_dir().ok_or_else(|| {
             CeairError::config("无法确定系统配置目录")
         })?;
-        Ok(base.join("ceair"))
+        Ok(base.join("chenagent"))
     }
 
     /// 从磁盘加载配置文件

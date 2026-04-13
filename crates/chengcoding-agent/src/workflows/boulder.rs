@@ -106,8 +106,8 @@ impl BoulderManager {
 
     /// 从 JSON 字符串加载状态
     pub fn load(&mut self, json: &str) -> Result<(), String> {
-        let state: BoulderState = serde_json::from_str(json)
-            .map_err(|e| format!("解析 boulder.json 失败: {e}"))?;
+        let state: BoulderState =
+            serde_json::from_str(json).map_err(|e| format!("解析 boulder.json 失败: {e}"))?;
         self.state = Some(state);
         Ok(())
     }
@@ -118,8 +118,7 @@ impl BoulderManager {
             .state
             .as_ref()
             .ok_or_else(|| "无活跃状态可保存".to_string())?;
-        serde_json::to_string_pretty(state)
-            .map_err(|e| format!("序列化 boulder 状态失败: {e}"))
+        serde_json::to_string_pretty(state).map_err(|e| format!("序列化 boulder 状态失败: {e}"))
     }
 
     /// 创建新的会话状态
@@ -130,8 +129,7 @@ impl BoulderManager {
         total_tasks: usize,
         session_id: impl Into<String>,
     ) -> &BoulderState {
-        let mut state =
-            BoulderState::new(active_plan, plan_name, total_tasks);
+        let mut state = BoulderState::new(active_plan, plan_name, total_tasks);
         state.session_ids.push(session_id.into());
         self.state = Some(state);
         self.state.as_ref().unwrap()
@@ -229,12 +227,7 @@ mod tests {
     #[test]
     fn 创建新会话状态() {
         let mut mgr = BoulderManager::new();
-        let state = mgr.create_new(
-            ".sisyphus/plans/p1.json",
-            "测试计划",
-            5,
-            "sess-001",
-        );
+        let state = mgr.create_new(".sisyphus/plans/p1.json", "测试计划", 5, "sess-001");
         assert_eq!(state.plan_name, "测试计划");
         assert_eq!(state.progress.total_count, 5);
         assert_eq!(state.session_ids.len(), 1);
@@ -276,8 +269,7 @@ mod tests {
     #[test]
     fn 恢复会话生成继续提示() {
         let mut mgr = BoulderManager::new();
-        let prompt =
-            mgr.resume(&sample_boulder_json(), "session-def").unwrap();
+        let prompt = mgr.resume(&sample_boulder_json(), "session-def").unwrap();
         assert!(prompt.contains("重构认证模块"));
         assert!(prompt.contains("3/10"));
         assert!(prompt.contains("2 个会话")); // 原有1个 + 新增1个

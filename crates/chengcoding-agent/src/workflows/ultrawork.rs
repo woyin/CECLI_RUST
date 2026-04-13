@@ -101,9 +101,7 @@ const ACTIVATION_KEYWORDS: &[&str] = &["ultrawork", "ulw"];
 /// 检查输入文本是否包含 UltraWork 激活关键词
 pub fn detect_activation(input: &str) -> bool {
     let lower = input.to_lowercase();
-    ACTIVATION_KEYWORDS
-        .iter()
-        .any(|kw| lower.contains(kw))
+    ACTIVATION_KEYWORDS.iter().any(|kw| lower.contains(kw))
 }
 
 // ============================================================

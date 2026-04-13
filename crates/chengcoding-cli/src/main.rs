@@ -21,16 +21,17 @@ use tracing::{error, info};
 /// ChengCoding — 一个 AI 驱动的编码智能体 CLI 工具
 #[derive(Parser, Debug)]
 #[command(
-    name = "ceair",
+    name = "chengcoding",
     version,
     about = "ChengCoding — AI 驱动的编码智能体命令行工具",
     long_about = "ChengCoding 是一个基于 AI 的编码助手 CLI 工具，\n\
-                  支持多种 AI 提供商、工具调用和终端交互界面。"
+                  支持多种 AI 提供商、工具调用和终端交互界面。\n\
+                  直接运行 chengcoding 即等同于 chengcoding launch。"
 )]
 struct Cli {
-    /// 子命令
+    /// 子命令（不指定时默认执行 launch）
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 
     /// 日志级别（trace / debug / info / warn / error）
     #[arg(long, global = true, default_value = "info")]
@@ -127,10 +128,11 @@ async fn main() -> Result<()> {
     let shutdown_signal = tokio::signal::ctrl_c();
     tokio::pin!(shutdown_signal);
 
-    // 根据子命令分发执行
+    // 根据子命令分发执行（未指定子命令时默认为 launch）
+    let command = cli.command.unwrap_or(Commands::Launch(commands::launch::LaunchArgs::default()));
     let result = tokio::select! {
         // 正常执行子命令
-        result = dispatch_command(cli.command, config, config_manager) => result,
+        result = dispatch_command(command, config, config_manager) => result,
         // 收到 Ctrl+C 信号，执行优雅退出
         _ = &mut shutdown_signal => {
             info!("收到中断信号，正在优雅退出...");
@@ -182,10 +184,12 @@ async fn dispatch_command(
 
 /// 打印详细的版本信息
 fn print_version() {
-    println!("ceair {}", env!("CARGO_PKG_VERSION"));
+    println!("chengcoding {}", env!("CARGO_PKG_VERSION"));
     println!("AI 驱动的编码智能体命令行工具");
     println!();
     println!("支持的 AI 提供商:");
+    println!("  - OpenAI (GPT-5.4/GPT-4o)");
+    println!("  - Anthropic (Claude Opus/Sonnet)");
     println!("  - DeepSeek（深度求索）");
     println!("  - Qianwen（通义千问）");
     println!("  - Wenxin（文心一言）");

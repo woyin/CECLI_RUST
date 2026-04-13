@@ -28,7 +28,7 @@ use chengcoding_tui::App;
 /// - 选择 AI 模型和提供商
 /// - 启用交互模式或禁用 TUI
 /// - 启用 Autopilot 长任务全自动模式
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct LaunchArgs {
     /// 要执行的任务描述（可选，不提供时进入交互模式）
     #[arg(short, long)]
@@ -116,12 +116,12 @@ pub async fn execute(args: LaunchArgs, config: CeairConfig) -> Result<()> {
         // 单次任务模式：发送 prompt 并获取结果
         run_single_shot(provider.as_ref(), &registry, prompt, model_name, &config)
             .await
-    } else if args.interactive && !args.no_tui {
-        // 交互模式 + TUI 界面
-        run_tui_mode(provider, registry, model_name, &config).await
-    } else {
-        // 交互式命令行模式（纯文本）
+    } else if args.no_tui {
+        // 用户明确禁用 TUI，使用纯文本交互模式
         run_interactive_mode(provider, registry, model_name, &config).await
+    } else {
+        // 默认启动 TUI 交互界面
+        run_tui_mode(provider, registry, model_name, &config).await
     }
 }
 
