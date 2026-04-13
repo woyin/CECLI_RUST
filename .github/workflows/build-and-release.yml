@@ -61,7 +61,7 @@ jobs:
           printf '[target.aarch64-unknown-linux-gnu]\nlinker = "aarch64-linux-gnu-gcc"\n' > .cargo/config.toml
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }} --locked
+        run: cargo build --release --target ${{ matrix.target }} --locked -p chengcoding-cli
 
       - name: Verify binary exists
         run: ls -lh target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}
