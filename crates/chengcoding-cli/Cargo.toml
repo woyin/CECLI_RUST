@@ -5,10 +5,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "CLI entry point for ChengCoding"
+description = "CLI entry point for OrangeCoding"
 
 [[bin]]
-name = "chengcoding"
+name = "orangecoding"
 path = "src/main.rs"
 
 [dependencies]

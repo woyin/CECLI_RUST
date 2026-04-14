@@ -1,6 +1,6 @@
-//! # ChengCoding CLI 主入口
+//! # OrangeCoding CLI 主入口
 //!
-//! ChengCoding AI 编程助手的命令行入口模块。
+//! OrangeCoding AI 编程助手的命令行入口模块。
 //! 负责命令行参数解析、日志初始化、配置加载和子命令分发。
 
 mod commands;
@@ -21,12 +21,12 @@ use tracing::{error, info};
 /// ChengCoding — 一个 AI 驱动的编码智能体 CLI 工具
 #[derive(Parser, Debug)]
 #[command(
-    name = "chengcoding",
+    name = "orangecoding",
     version,
-    about = "ChengCoding — AI 驱动的编码智能体命令行工具",
-    long_about = "ChengCoding 是一个基于 AI 的编码助手 CLI 工具，\n\
+    about = "OrangeCoding — AI 驱动的编码智能体命令行工具",
+    long_about = "OrangeCoding 是一个基于 AI 的编码助手 CLI 工具，\n\
                   支持多种 AI 提供商、工具调用和终端交互界面。\n\
-                  直接运行 chengcoding 即等同于 chengcoding launch。"
+                  直接运行 orangecoding 即等同于 orangecoding launch。"
 )]
 struct Cli {
     /// 启动参数（无子命令时直接生效，等同于 chengcoding launch）
@@ -116,7 +116,7 @@ async fn main() -> Result<()> {
     // 初始化日志系统
     init_tracing(&cli.log_level, cli.json_log).context("日志系统初始化失败")?;
 
-    info!("ChengCoding CLI 启动中...");
+    info!("OrangeCoding CLI 启动中...");
 
     // 加载配置
     let config_manager = chengcoding_config::ConfigManager::new()
@@ -159,7 +159,7 @@ async fn main() -> Result<()> {
         eprintln!("错误: {:#}", e);
     }
 
-    info!("ChengCoding CLI 已退出");
+    info!("OrangeCoding CLI 已退出");
     result
 }
 
@@ -188,7 +188,7 @@ async fn dispatch_command(
 
 /// 打印详细的版本信息
 fn print_version() {
-    println!("chengcoding {}", env!("CARGO_PKG_VERSION"));
+    println!("orangecoding {}", env!("CARGO_PKG_VERSION"));
     println!("AI 驱动的编码智能体命令行工具");
     println!();
     println!("支持的 AI 提供商:");
