@@ -1,6 +1,6 @@
 # Mesh 架构
 
-> ChengCoding Mesh 是多 Agent 协调的基础设施层，提供消息路由、状态共享、任务编排和角色管理。
+> OrangeCoding Mesh 是多 Agent 协调的基础设施层，提供消息路由、状态共享、任务编排和角色管理。
 
 ## 目录
 

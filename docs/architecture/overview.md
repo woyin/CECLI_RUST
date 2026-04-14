@@ -1,6 +1,6 @@
 # 架构概览
 
-> ChengCoding 是一个用 Rust 编写的多 Agent AI 编程助手系统，采用模块化 workspace 架构，由 11 个独立 crate 组成。
+> OrangeCoding 是一个用 Rust 编写的多 Agent AI 编程助手系统，采用模块化 workspace 架构，由 11 个独立 crate 组成。
 
 ## 目录
 
@@ -16,7 +16,7 @@
 
 ## 系统概述
 
-ChengCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent AI 编程助手运行时系统。其设计目标是：
+OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent AI 编程助手运行时系统。其设计目标是：
 
 - **多 Agent 协作**：11 种专业化 Agent，各司其职
 - **多模型支持**：统一适配 OpenAI、Anthropic、DeepSeek、通义千问、文心一言
@@ -112,7 +112,7 @@ ChengCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent AI
 | `types.rs` | `AgentId`, `SessionId`, `ToolName`, `AgentRole`, `AgentStatus`, `AgentCapability`, `TokenUsage` | 全局标识符和枚举 |
 | `message.rs` | `Role`, `Message`, `ToolCall`, `Conversation` | AI 对话消息模型 |
 | `event.rs` | `AgentEvent` | Agent 事件类型 |
-| `error.rs` | `ChengCodingError` | 统一错误类型 |
+| `error.rs` | `OrangeCodingError` | 统一错误类型 |
 
 **设计原则**：零外部 AI/网络依赖，仅使用 serde、chrono、uuid 等基础库。
 
@@ -185,7 +185,7 @@ ChengCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent AI
 
 | 模块 | 关键类型 | 描述 |
 |------|----------|------|
-| `config.rs` | `ChengCodingConfig`, `AiConfig`, `AgentConfig`, `ToolsConfig`, `TuiConfig`, `LoggingConfig` | 配置数据结构 |
+| `config.rs` | `OrangeCodingConfig`, `AiConfig`, `AgentConfig`, `ToolsConfig`, `TuiConfig`, `LoggingConfig` | 配置数据结构 |
 | `crypto.rs` | `CryptoStore` | AES-256 加密密钥存储 |
 | `source.rs` | `ConfigSource`, `LayeredConfig` | 多层配置合并 |
 | `discovery.rs` | `ConfigDiscovery` | 自动配置文件发现 |

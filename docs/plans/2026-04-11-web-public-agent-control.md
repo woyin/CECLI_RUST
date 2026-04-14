@@ -1,6 +1,6 @@
 # Web / 公网 Agent 控制面完整设计方案
 
-> 目标：为 ChengCoding 增加一个可从浏览器访问、并可在公网环境中安全接入的 Agent 控制面。本文档面向实现团队，强调可执行性、模块边界、安全模型和分阶段落地。
+> 目标：为 OrangeCoding 增加一个可从浏览器访问、并可在公网环境中安全接入的 Agent 控制面。本文档面向实现团队，强调可执行性、模块边界、安全模型和分阶段落地。
 
 ## 1. 目标
 
@@ -8,7 +8,7 @@
 
 用户需要：
 
-1. 从浏览器查看和控制本地或远程运行的 ChengCoding Agent
+1. 从浏览器查看和控制本地或远程运行的 OrangeCoding Agent
 2. 在公网环境中安全地连接和控制 Agent，而不是局限于本机 `stdio`
 3. 保留现有 Agent、工具、权限和审计体系，而不是重写一套新的运行时
 4. 支持流式输出、工具调用可视化、任务取消、权限审批和会话恢复
@@ -50,7 +50,7 @@
 
 1. **本地 Web 控制面**可以在现有运行时上加一个服务层
 2. **公网控制面**必须引入网关、认证和审批边界
-3. 不应直接把 `ChengCoding launch` 或 Agent Worker 对外暴露
+3. 不应直接把 `OrangeCoding launch` 或 Agent Worker 对外暴露
 
 ---
 
@@ -98,7 +98,7 @@ Agent Worker Runtime
 ### 3.3 分阶段实施
 
 1. **Phase A: Local Web Control**
-   - `ChengCoding serve --bind 127.0.0.1:PORT`
+   - `OrangeCoding serve --bind 127.0.0.1:PORT`
    - 浏览器通过 `localhost` 控制本机 Agent
 2. **Phase B: Remote Worker Link**
    - Worker 主动连 Gateway，建立反向控制通道
@@ -155,7 +155,7 @@ Agent Worker Runtime
 
 用途：
 
-1. 浏览器控制本机运行的 ChengCoding
+1. 浏览器控制本机运行的 OrangeCoding
 2. 开发和调试阶段最快落地
 
 特点：
@@ -676,7 +676,7 @@ RBAC 最小角色：
 
 ### 范围
 
-1. 新增 `ChengCoding serve`
+1. 新增 `OrangeCoding serve`
 2. 本地监听 `127.0.0.1`
 3. 提供 HTTP + WebSocket
 4. 可创建会话、发送消息、看流式输出、取消任务
@@ -965,7 +965,7 @@ MVP 指 **Local Web Control**，不是公网 SaaS。
 
 必须具备：
 
-1. `ChengCoding serve --bind 127.0.0.1:PORT`
+1. `OrangeCoding serve --bind 127.0.0.1:PORT`
 2. 浏览器打开会话页面
 3. 创建会话
 4. 收发消息

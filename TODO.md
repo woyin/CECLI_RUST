@@ -373,7 +373,7 @@
 
 **设计**:
 1. 新建 `chengcoding-agent/src/mailbox.rs`
-2. 邮箱路径: `~/.ChengCoding/teams/{team_name}/inboxes/{agent_name}.json`
+2. 邮箱路径: `~/.orangecoding/teams/{team_name}/inboxes/{agent_name}.json`
 3. 消息结构: `MailboxMessage { from, text, timestamp, read, summary }`
 4. 操作:
    - `read_mailbox(agent, team) -> Vec<MailboxMessage>`
@@ -430,7 +430,7 @@
 
 **设计**:
 1. 新建 `chengcoding-agent/src/memdir.rs`
-2. 存储路径: `~/.ChengCoding/projects/{project_hash}/memory/`
+2. 存储路径: `~/.orangecoding/projects/{project_hash}/memory/`
 3. 文件格式:
    ```
    ---
@@ -497,7 +497,7 @@
 
 **设计**:
 1. 新建 `chengcoding-agent/src/session_memory.rs`
-2. 存储: `~/.ChengCoding/session_memory/{session_id}.md`
+2. 存储: `~/.orangecoding/session_memory/{session_id}.md`
 3. `SessionMemory` 结构体:
    - `notes: Vec<String>`
    - `total_tokens: usize`
@@ -563,7 +563,7 @@
    - 距上次扫描 ≥ 10 分钟？
    - ≥ 5 个新会话？
 3. 分布式锁 `DreamLock`:
-   - 锁文件: `~/.ChengCoding/memory/.consolidate-lock`
+   - 锁文件: `~/.orangecoding/memory/.consolidate-lock`
    - 获取: 写入 PID → 重读验证所有权
    - 过期: mtime > 1 小时 → 可抢占
    - 释放: 删除锁文件

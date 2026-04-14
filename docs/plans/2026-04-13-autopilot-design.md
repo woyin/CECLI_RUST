@@ -2,7 +2,7 @@
 
 ## 1. 概述
 
-Autopilot 是 ChengCoding 的长任务全自动执行模式。用户输入一个大需求（数百行 prompt），系统在获得所有权限的前提下，通过 **计划 → 执行 → 验证 → 再计划** 的循环，把所有工作做完。
+Autopilot 是 OrangeCoding 的长任务全自动执行模式。用户输入一个大需求（数百行 prompt），系统在获得所有权限的前提下，通过 **计划 → 执行 → 验证 → 再计划** 的循环，把所有工作做完。
 
 灵感来源：GitHub Copilot 的 Agent Mode、Cursor 的 Auto mode。
 

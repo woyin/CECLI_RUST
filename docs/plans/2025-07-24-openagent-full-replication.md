@@ -406,7 +406,8 @@ fn test_detect_zellij_env() {
 #[test]
 fn test_zellij_pane_command() {
     let zellij = ZellijIntegration::new();
-    let cmd = zellij.build_new_pane_command("ChengCoding agent run", Some("Agent-1"));
+        let cmd = zellij.build_new_pane_command("OrangeCoding agent run", Some("Agent-1"));
+
     assert!(cmd.contains("zellij action new-pane"));
 }
 ```

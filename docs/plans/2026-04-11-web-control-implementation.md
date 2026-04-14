@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add `ChengCoding serve --bind 127.0.0.1:PORT` to provide browser-based local control of ChengCoding agents via HTTP + WebSocket.
+**Goal:** Add `OrangeCoding serve --bind 127.0.0.1:PORT` to provide browser-based local control of OrangeCoding agents via HTTP + WebSocket.
 
 **Architecture:** Three new crates (`chengcoding-control-protocol`, `chengcoding-control-server`, `chengcoding-worker`) sit atop the existing agent runtime. A `serve` CLI subcommand starts an HTTP/WS server on localhost. The browser connects via WebSocket for bidirectional streaming. The worker wraps `AgentLoop` and converts `AgentEvent` into control-protocol events. Approval is upgraded from synchronous CLI prompts to async suspend/resume over WebSocket.
 
@@ -1715,7 +1715,7 @@ pub async fn execute(args: ServeArgs) -> anyhow::Result<()> {
     let token = chengcoding_control_server::start_server(config, runtime).await?;
 
     println!("\n╔══════════════════════════════════════════════════╗");
-    println!("║          ChengCoding Control Server Started            ║");
+    println!("║          OrangeCoding Control Server Started            ║");
     println!("╠══════════════════════════════════════════════════╣");
     println!("║                                                  ║");
     println!("║  URL:   http://{}           ║", args.bind);
@@ -1763,7 +1763,7 @@ Expected: `ok`
 
 ```bash
 git add crates/chengcoding-cli/src/commands/serve.rs crates/chengcoding-cli/src/main.rs crates/chengcoding-cli/Cargo.toml Cargo.toml Cargo.lock
-git commit -m "feat: add 'ChengCoding serve' subcommand for local web control
+git commit -m "feat: add 'OrangeCoding serve' subcommand for local web control
 
 Starts HTTP + WebSocket server on localhost:3200 (configurable via --bind).
 Displays auth token on startup. Ctrl+C for graceful shutdown."
@@ -1921,7 +1921,7 @@ Tests cover session CRUD, WebSocket ping/pong, and health check."
 ### Step 1: Update README with `serve` usage
 
 Add a section documenting:
-- `ChengCoding serve --bind 127.0.0.1:3200`
+- `OrangeCoding serve --bind 127.0.0.1:3200`
 - How to use the auth token
 - Available HTTP API endpoints
 - WebSocket protocol basics
@@ -1936,7 +1936,7 @@ Add a section to `docs/architecture/overview.md` describing the control plane ar
 git add README.md docs/
 git commit -m "docs: add control plane documentation
 
-Document the 'ChengCoding serve' command, HTTP API, WebSocket protocol,
+Document the 'OrangeCoding serve' command, HTTP API, WebSocket protocol,
 and control plane architecture."
 ```
 
