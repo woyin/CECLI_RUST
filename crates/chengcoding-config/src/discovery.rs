@@ -17,7 +17,7 @@ use tracing::debug;
 /// 配置提供者 — 标识配置来源
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConfigProvider {
-    /// ChengCoding 原生配置 (.chengcoding/)
+    /// ChengCoding 原生配置 (.orangecoding/)
     Native,
     /// Claude Code 配置 (.claude/)
     Claude,
@@ -31,7 +31,7 @@ impl ConfigProvider {
     /// 获取配置目录名
     pub fn dir_name(&self) -> &str {
         match self {
-            ConfigProvider::Native => ".chengcoding",
+            ConfigProvider::Native => ".orangecoding",
             ConfigProvider::Claude => ".claude",
             ConfigProvider::Codex => ".codex",
             ConfigProvider::Gemini => ".gemini",
@@ -386,7 +386,7 @@ mod tests {
     // -----------------------------------------------------------------------
     #[test]
     fn test_provider_dir_names() {
-        assert_eq!(ConfigProvider::Native.dir_name(), ".chengcoding");
+        assert_eq!(ConfigProvider::Native.dir_name(), ".orangecoding");
         assert_eq!(ConfigProvider::Claude.dir_name(), ".claude");
         assert_eq!(ConfigProvider::Codex.dir_name(), ".codex");
         assert_eq!(ConfigProvider::Gemini.dir_name(), ".gemini");
@@ -420,17 +420,17 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
 
         // 创建项目级和用户级配置目录
-        create_dir(&project, ".chengcoding");
+        create_dir(&project, ".orangecoding");
         create_dir(&project, ".claude");
-        create_dir(&home, ".chengcoding");
+        create_dir(&home, ".orangecoding");
         create_dir(&home, ".gemini");
 
         let discovery = ConfigDiscovery::new(project, home);
         let dirs = discovery.get_config_dirs();
 
         // Native 优先级最高，项目级优先于用户级
-        assert_eq!(dirs[0].0, ConfigProvider::Native); // 项目级 .chengcoding
-        assert_eq!(dirs[1].0, ConfigProvider::Native); // 用户级 .chengcoding
+        assert_eq!(dirs[0].0, ConfigProvider::Native); // 项目级 .orangecoding
+        assert_eq!(dirs[1].0, ConfigProvider::Native); // 用户级 .orangecoding
         assert_eq!(dirs[2].0, ConfigProvider::Claude); // 项目级 .claude
         assert_eq!(dirs[3].0, ConfigProvider::Gemini); // 用户级 .gemini
         assert_eq!(dirs.len(), 4);
@@ -447,8 +447,8 @@ mod tests {
         fs::create_dir_all(&project).unwrap();
         fs::create_dir_all(&home).unwrap();
 
-        // 创建 .chengcoding/AGENTS.md
-        create_file(&project, ".chengcoding/AGENTS.md", "# 规则文件");
+        // 创建 .orangecoding/AGENTS.md
+        create_file(&project, ".orangecoding/AGENTS.md", "# 规则文件");
 
         let discovery = ConfigDiscovery::new(project, home);
         let rules = discovery.discover_rules();
@@ -496,12 +496,12 @@ mod tests {
         // 创建技能包目录结构
         create_file(
             &project,
-            ".chengcoding/skills/code-review/SKILL.md",
+            ".orangecoding/skills/code-review/SKILL.md",
             "# 代码审查技能",
         );
         create_file(
             &project,
-            ".chengcoding/skills/testing/SKILL.md",
+            ".orangecoding/skills/testing/SKILL.md",
             "# 测试技能",
         );
 
@@ -528,8 +528,8 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
 
         // 创建命令目录
-        create_file(&project, ".chengcoding/commands/deploy.md", "# 部署命令");
-        create_file(&project, ".chengcoding/commands/lint.md", "# 代码检查命令");
+        create_file(&project, ".orangecoding/commands/deploy.md", "# 部署命令");
+        create_file(&project, ".orangecoding/commands/lint.md", "# 代码检查命令");
 
         let discovery = ConfigDiscovery::new(project, home);
         let commands = discovery.discover_commands();
@@ -556,7 +556,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
 
         // Native（优先级100）和 Claude（优先级80）都有 AGENTS.md
-        create_file(&project, ".chengcoding/AGENTS.md", "# Native 规则");
+        create_file(&project, ".orangecoding/AGENTS.md", "# Native 规则");
         create_file(&project, ".claude/AGENTS.md", "# Claude 规则");
 
         let discovery = ConfigDiscovery::new(project, home);
@@ -578,7 +578,7 @@ mod tests {
         fs::create_dir_all(&project).unwrap();
         fs::create_dir_all(&home).unwrap();
 
-        create_file(&project, ".chengcoding/AGENTS.md", "# Native");
+        create_file(&project, ".orangecoding/AGENTS.md", "# Native");
         create_file(&project, ".claude/CLAUDE.md", "# Claude");
 
         let mut discovery = ConfigDiscovery::new(project, home);
@@ -602,8 +602,8 @@ mod tests {
         fs::create_dir_all(&project).unwrap();
         fs::create_dir_all(&home).unwrap();
 
-        create_file(&project, ".chengcoding/skills/review/SKILL.md", "# 审查");
-        create_file(&project, ".chengcoding/skills/deploy/SKILL.md", "# 部署");
+        create_file(&project, ".orangecoding/skills/review/SKILL.md", "# 审查");
+        create_file(&project, ".orangecoding/skills/deploy/SKILL.md", "# 部署");
 
         let mut discovery = ConfigDiscovery::new(project, home);
         discovery.disable_extension("review");
@@ -632,7 +632,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
 
         // 在项目级 Native 和 Claude 中都创建 mcp.json
-        create_file(&project, ".chengcoding/mcp.json", r#"{"native": true}"#);
+        create_file(&project, ".orangecoding/mcp.json", r#"{"native": true}"#);
         create_file(&project, ".claude/mcp.json", r#"{"claude": true}"#);
 
         let discovery = ConfigDiscovery::new(project, home);
@@ -655,8 +655,12 @@ mod tests {
         fs::create_dir_all(&project).unwrap();
         fs::create_dir_all(&home).unwrap();
 
-        create_file(&project, ".chengcoding/mcp.json", r#"{"servers": []}"#);
-        create_file(&home, ".chengcoding/mcp.json", r#"{"servers": ["global"]}"#);
+        create_file(&project, ".orangecoding/mcp.json", r#"{"servers": []}"#);
+        create_file(
+            &home,
+            ".orangecoding/mcp.json",
+            r#"{"servers": ["global"]}"#,
+        );
 
         let discovery = ConfigDiscovery::new(project, home);
         let mcp = discovery.discover_mcp_configs();
@@ -703,14 +707,14 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
 
         // 创建多种类型的配置
-        create_file(&project, ".chengcoding/AGENTS.md", "# 规则");
-        create_file(&project, ".chengcoding/mcp.json", "{}");
+        create_file(&project, ".orangecoding/AGENTS.md", "# 规则");
+        create_file(&project, ".orangecoding/mcp.json", "{}");
         create_file(
             &project,
-            ".chengcoding/skills/test-skill/SKILL.md",
+            ".orangecoding/skills/test-skill/SKILL.md",
             "# 技能",
         );
-        create_file(&project, ".chengcoding/commands/build.md", "# 构建");
+        create_file(&project, ".orangecoding/commands/build.md", "# 构建");
 
         let discovery = ConfigDiscovery::new(project, home);
         let all = discovery.discover_all();

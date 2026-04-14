@@ -46,11 +46,11 @@ impl InitCommand {
     /// 生成默认 AGENTS.md 内容
     pub fn generate_agents_md(project_name: &str) -> String {
         format!(
-            r#"# {} — ChengCoding 代理配置
+            r#"# {} — OrangeCoding 代理配置
 
 ## 项目概述
 
-本项目使用 ChengCoding AI 编码代理进行辅助开发。
+本项目使用 OrangeCoding AI 编码代理进行辅助开发。
 
 ## 代理行为规则
 
@@ -77,8 +77,8 @@ impl InitCommand {
     /// 生成默认 config.toml 内容
     pub fn generate_config_toml(provider: &str) -> String {
         format!(
-            r#"# ChengCoding 项目配置
-# 由 ceair init 自动生成
+            r#"# OrangeCoding 项目配置
+# 由 orangecoding init 自动生成
 
 [model]
 provider = "{provider}"
@@ -108,7 +108,7 @@ max_entries = 1000
 
         if options.create_config {
             files.push((
-                dir.join(".chengcoding").join("config.toml"),
+                dir.join(".orangecoding").join("config.toml"),
                 Self::generate_config_toml(provider),
             ));
         }
@@ -128,7 +128,7 @@ max_entries = 1000
         if options.create_commands_dir {
             // 命令目录用 .gitkeep 占位
             files.push((
-                dir.join(".chengcoding").join("commands").join(".gitkeep"),
+                dir.join(".orangecoding").join("commands").join(".gitkeep"),
                 String::new(),
             ));
         }
@@ -139,7 +139,7 @@ max_entries = 1000
     /// 检查项目是否已初始化
     pub fn is_initialized(project_dir: &Path) -> bool {
         project_dir
-            .join(".chengcoding")
+            .join(".orangecoding")
             .join("config.toml")
             .exists()
     }
@@ -158,7 +158,7 @@ mod tests {
     fn test_generate_agents_md() {
         let content = InitCommand::generate_agents_md("test-project");
         assert!(content.contains("test-project"));
-        assert!(content.contains("ChengCoding"));
+        assert!(content.contains("OrangeCoding"));
         assert!(content.contains("代理"));
         assert!(content.contains("TDD"));
     }
@@ -213,9 +213,9 @@ mod tests {
     #[test]
     fn test_is_initialized_with_config() {
         let dir = tempfile::tempdir().unwrap();
-        let chengcoding_dir = dir.path().join(".chengcoding");
-        std::fs::create_dir_all(&chengcoding_dir).unwrap();
-        std::fs::write(chengcoding_dir.join("config.toml"), "# config").unwrap();
+        let orangecoding_dir = dir.path().join(".orangecoding");
+        std::fs::create_dir_all(&orangecoding_dir).unwrap();
+        std::fs::write(orangecoding_dir.join("config.toml"), "# config").unwrap();
 
         assert!(InitCommand::is_initialized(dir.path()));
     }
