@@ -14,6 +14,7 @@ use ratatui::{
 };
 
 use chrono::{DateTime, Local, Utc};
+use unicode_width::UnicodeWidthStr;
 
 use crate::app::{App, DisplayMessage};
 use crate::markdown::MarkdownRenderer;
@@ -129,8 +130,15 @@ impl SessionView {
 
         // 计算滚动偏移量
         // scroll_offset 为 0 表示显示最底部的内容
-        let total_lines = all_lines.len() as u16;
         let visible_height = area.height.saturating_sub(2); // 减去边框高度
+        let content_width = area.width.saturating_sub(2) as usize; // 减去边框宽度
+
+        // 计算换行后的实际可视行数（考虑 Wrap 对长行的折叠）
+        let total_lines = if content_width > 0 {
+            Self::count_wrapped_lines(&all_lines, content_width) as u16
+        } else {
+            all_lines.len() as u16
+        };
 
         // 将 scroll_offset（从底部计算）转换为从顶部计算的偏移
         let scroll_from_top = if total_lines > visible_height {
@@ -197,6 +205,25 @@ impl SessionView {
             .format("%H:%M:%S")
             .to_string()
     }
+
+    /// 计算文本行在给定宽度下换行后的实际可视行数
+    fn count_wrapped_lines(lines: &[Line<'_>], width: usize) -> usize {
+        if width == 0 {
+            return lines.len();
+        }
+        lines
+            .iter()
+            .map(|line| {
+                let line_width: usize =
+                    line.spans.iter().map(|s| s.content.width()).sum();
+                if line_width == 0 {
+                    1 // 空行仍占1行
+                } else {
+                    (line_width + width - 1) / width // 向上取整
+                }
+            })
+            .sum()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -234,5 +261,44 @@ mod tests {
 
         assert_eq!(formatted.len(), 8);
         assert_eq!(formatted.chars().filter(|ch| *ch == ':').count(), 2);
+    }
+
+    #[test]
+    fn 测试换行行数计算_短行不换行() {
+        let lines = vec![
+            Line::from("short"),
+            Line::from("also short"),
+        ];
+        // 每行都短于 80 列，不需要换行
+        assert_eq!(SessionView::count_wrapped_lines(&lines, 80), 2);
+    }
+
+    #[test]
+    fn 测试换行行数计算_长行换行() {
+        let long_text = "a".repeat(160);
+        let lines = vec![Line::from(long_text)];
+        // 160 字符在 80 列宽度下应换成 2 行
+        assert_eq!(SessionView::count_wrapped_lines(&lines, 80), 2);
+    }
+
+    #[test]
+    fn 测试换行行数计算_空行() {
+        let lines = vec![Line::from("")];
+        assert_eq!(SessionView::count_wrapped_lines(&lines, 80), 1);
+    }
+
+    #[test]
+    fn 测试换行行数计算_零宽度回退() {
+        let lines = vec![Line::from("test"), Line::from("line")];
+        assert_eq!(SessionView::count_wrapped_lines(&lines, 0), 2);
+    }
+
+    #[test]
+    fn 测试换行行数计算_中文字符() {
+        // 每个中文字符占2列宽度
+        let text = "你好世界测试";  // 6 chars × 2 = 12 columns
+        let lines = vec![Line::from(text)];
+        // 在 10 列宽度下应换成 2 行 (12 / 10 向上取整 = 2)
+        assert_eq!(SessionView::count_wrapped_lines(&lines, 10), 2);
     }
 }
