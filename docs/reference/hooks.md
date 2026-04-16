@@ -22,7 +22,7 @@
 
 ## 概述
 
-Hook 系统位于 `chengcoding-agent` crate 的 `hooks.rs` 模块中，提供了一套可扩展的事件拦截机制。通过注册 Hook，可以在 Agent 执行流程的关键点进行：
+Hook 系统位于 `orangecoding-agent` crate 的 `hooks.rs` 模块中，提供了一套可扩展的事件拦截机制。通过注册 Hook，可以在 Agent 执行流程的关键点进行：
 
 - **监控**：记录日志、收集指标
 - **修改**：转换消息内容、调整参数
@@ -364,7 +364,7 @@ impl HookRegistry {
 ### 注册示例
 
 ```rust
-use chengcoding_agent::hooks::*;
+use orangecoding_agent::hooks::*;
 
 let mut registry = HookRegistry::new();
 
@@ -524,7 +524,7 @@ impl HookContext {
 ### 步骤一：定义 Hook
 
 ```rust
-use chengcoding_agent::hooks::*;
+use orangecoding_agent::hooks::*;
 
 fn create_my_hook() -> HookDef {
     HookDef {

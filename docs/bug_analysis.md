@@ -33,9 +33,9 @@ Router::new()
 WebSocket 路由直接挂在根 Router 上，而非嵌套在 `authed_api` 内。`ws_handler` 接收 `Query(_query): Query<WsQuery>` 但完全忽略 `token` 字段（`_query` 前缀 `_` 表示未使用）。`handle_socket` 无任何鉴权检查。
 
 影响范围：
-- `crates/chengcoding-control-server/src/routes.rs` — 路由配置
-- `crates/chengcoding-control-server/src/ws.rs` — WebSocket handler
-- `crates/chengcoding-control-server/src/auth.rs` — LocalAuth（已存在但未用于 WS）
+- `crates/orangecoding-control-server/src/routes.rs` — 路由配置
+- `crates/orangecoding-control-server/src/ws.rs` — WebSocket handler
+- `crates/orangecoding-control-server/src/auth.rs` — LocalAuth（已存在但未用于 WS）
 - 所有通过 WebSocket 传递的命令：`UserMessage`, `TaskCancel`, `ApprovalRespond`, `SessionCreate`, `SessionClose`
 
 修复策略：
@@ -90,10 +90,10 @@ async fn execute_turn(&self, session_id: String, ...) -> Result<(), String> {
 3. `AgentContext::new(sid, working_dir)` 每次创建全新上下文
 
 影响范围：
-- `crates/chengcoding-cli/src/commands/serve.rs` — LocalAgentExecutor
-- `crates/chengcoding-worker/src/session_bridge.rs` — SessionSupervisor（token 管理正确）
-- `crates/chengcoding-agent/src/agent_loop.rs` — AgentLoop::run（已支持 CancellationToken）
-- `crates/chengcoding-worker/src/runtime.rs` — AgentExecutor trait
+- `crates/orangecoding-cli/src/commands/serve.rs` — LocalAgentExecutor
+- `crates/orangecoding-worker/src/session_bridge.rs` — SessionSupervisor（token 管理正确）
+- `crates/orangecoding-agent/src/agent_loop.rs` — AgentLoop::run（已支持 CancellationToken）
+- `crates/orangecoding-worker/src/runtime.rs` — AgentExecutor trait
 
 修复策略：
 1. **`AgentExecutor::execute_turn` 签名增加 `CancellationToken` 参数**：将 session 的 token 传入
@@ -144,9 +144,9 @@ let sid = SessionId::from(session_id.clone());              // 使用传入的 s
 此外，当前没有 session 级别的 `AgentContext` 持久化机制。`SessionSupervisor` 只存 `SessionInfo`（元数据），不存对话历史和上下文。
 
 影响范围：
-- `crates/chengcoding-cli/src/commands/serve.rs` — LocalAgentExecutor（根因）
-- `crates/chengcoding-agent/src/context.rs` — AgentContext
-- `crates/chengcoding-worker/src/session_bridge.rs` — SessionSupervisor（需扩展存储 context）
+- `crates/orangecoding-cli/src/commands/serve.rs` — LocalAgentExecutor（根因）
+- `crates/orangecoding-agent/src/context.rs` — AgentContext
+- `crates/orangecoding-worker/src/session_bridge.rs` — SessionSupervisor（需扩展存储 context）
 - 所有依赖多轮对话的功能：follow-up 消息、工具结果引用、上下文连续性
 
 修复策略：

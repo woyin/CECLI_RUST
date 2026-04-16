@@ -1,36 +1,36 @@
 [workspace]
 members = [
-    "crates/chengcoding-core",
-    "crates/chengcoding-agent",
-    "crates/chengcoding-tools",
-    "crates/chengcoding-ai",
-    "crates/chengcoding-mesh",
-    "crates/chengcoding-config",
-    "crates/chengcoding-audit",
-    "crates/chengcoding-tui",
-    "crates/chengcoding-mcp",
-    "crates/chengcoding-cli",
-    "crates/chengcoding-session",
-    "crates/chengcoding-control-protocol",
-    "crates/chengcoding-control-server",
-    "crates/chengcoding-worker",
-    "crates/chengcoding-invariant",
+    "crates/orangecoding-core",
+    "crates/orangecoding-agent",
+    "crates/orangecoding-tools",
+    "crates/orangecoding-ai",
+    "crates/orangecoding-mesh",
+    "crates/orangecoding-config",
+    "crates/orangecoding-audit",
+    "crates/orangecoding-tui",
+    "crates/orangecoding-mcp",
+    "crates/orangecoding-cli",
+    "crates/orangecoding-session",
+    "crates/orangecoding-control-protocol",
+    "crates/orangecoding-control-server",
+    "crates/orangecoding-worker",
+    "crates/orangecoding-invariant",
 ]
 resolver = "2"
 
 [package]
-name = "chengcoding-workspace-tests"
+name = "orangecoding-workspace-tests"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
 [dev-dependencies]
-chengcoding-core = { workspace = true }
-chengcoding-agent = { workspace = true }
-chengcoding-tools = { workspace = true }
-chengcoding-control-protocol = { workspace = true }
-chengcoding-control-server = { workspace = true }
-chengcoding-worker = { workspace = true }
+orangecoding-core = { workspace = true }
+orangecoding-agent = { workspace = true }
+orangecoding-tools = { workspace = true }
+orangecoding-control-protocol = { workspace = true }
+orangecoding-control-server = { workspace = true }
+orangecoding-worker = { workspace = true }
 tokio = { workspace = true }
 tower = { workspace = true }
 axum = { workspace = true }
@@ -100,20 +100,20 @@ url = "2.5"
 config = "0.14"
 mockall = "0.12"
 tempfile = "3.9"
-chengcoding-core = { path = "crates/chengcoding-core" }
-chengcoding-agent = { path = "crates/chengcoding-agent" }
-chengcoding-tools = { path = "crates/chengcoding-tools" }
-chengcoding-ai = { path = "crates/chengcoding-ai" }
-chengcoding-mesh = { path = "crates/chengcoding-mesh" }
-chengcoding-config = { path = "crates/chengcoding-config" }
-chengcoding-audit = { path = "crates/chengcoding-audit" }
-chengcoding-tui = { path = "crates/chengcoding-tui" }
-chengcoding-mcp = { path = "crates/chengcoding-mcp" }
-chengcoding-session = { path = "crates/chengcoding-session" }
+orangecoding-core = { path = "crates/orangecoding-core" }
+orangecoding-agent = { path = "crates/orangecoding-agent" }
+orangecoding-tools = { path = "crates/orangecoding-tools" }
+orangecoding-ai = { path = "crates/orangecoding-ai" }
+orangecoding-mesh = { path = "crates/orangecoding-mesh" }
+orangecoding-config = { path = "crates/orangecoding-config" }
+orangecoding-audit = { path = "crates/orangecoding-audit" }
+orangecoding-tui = { path = "crates/orangecoding-tui" }
+orangecoding-mcp = { path = "crates/orangecoding-mcp" }
+orangecoding-session = { path = "crates/orangecoding-session" }
 axum = { version = "0.7", features = ["ws"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
-chengcoding-control-protocol = { path = "crates/chengcoding-control-protocol" }
-chengcoding-control-server = { path = "crates/chengcoding-control-server" }
-chengcoding-worker = { path = "crates/chengcoding-worker" }
+orangecoding-control-protocol = { path = "crates/orangecoding-control-protocol" }
+orangecoding-control-server = { path = "crates/orangecoding-control-server" }
+orangecoding-worker = { path = "crates/orangecoding-worker" }

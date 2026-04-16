@@ -17,7 +17,7 @@
 
 本方案必须满足：
 
-1. **兼容现有架构**：尽量复用 `chengcoding-agent`、`chengcoding-tools`、`chengcoding-mcp`、`chengcoding-session`
+1. **兼容现有架构**：尽量复用 `orangecoding-agent`、`orangecoding-tools`、`orangecoding-mcp`、`orangecoding-session`
 2. **本地优先，公网可扩展**：先支持 `localhost` Web 控制，再升级到公网 Gateway
 3. **安全默认关闭**：公网接入不允许“零鉴权、零审批”直接操控本地机器
 4. **流式交互**：支持 token 流、状态流、工具调用流、审批流
@@ -39,10 +39,10 @@
 
 基于现有代码库，当前约束如下：
 
-1. `chengcoding-cli` 是主入口，当前没有 `serve` 子命令，只有 `Launch / Config / Status / Version`
-2. `chengcoding-mcp` 的传输抽象存在，但当前仅实现 `stdio`
-3. `chengcoding-cli::rpc` 提供的是 JSONL over `stdio`，不是 HTTP / WebSocket
-4. `chengcoding-agent` 和 `chengcoding-mesh` 以进程内通信为主，`mailbox` 当前是内存实现
+1. `orangecoding-cli` 是主入口，当前没有 `serve` 子命令，只有 `Launch / Config / Status / Version`
+2. `orangecoding-mcp` 的传输抽象存在，但当前仅实现 `stdio`
+3. `orangecoding-cli::rpc` 提供的是 JSONL over `stdio`，不是 HTTP / WebSocket
+4. `orangecoding-agent` 和 `orangecoding-mesh` 以进程内通信为主，`mailbox` 当前是内存实现
 5. 权限体系以本地交互式确认为主，适合 CLI，不足以直接暴露公网
 6. OAuth 能力主要用于“连接远程 MCP 服务”，不是“把本地 Agent 作为公网服务暴露”
 
@@ -79,10 +79,10 @@ Control Gateway
   ▼
 Agent Worker Runtime
   │
-  ├── chengcoding-agent
-  ├── chengcoding-tools
-  ├── chengcoding-session
-  ├── chengcoding-audit
+  ├── orangecoding-agent
+  ├── orangecoding-tools
+  ├── orangecoding-session
+  ├── orangecoding-audit
   └── local filesystem / model providers / MCP
 ```
 
@@ -113,38 +113,38 @@ Agent Worker Runtime
 
 推荐新增以下 crate：
 
-1. `crates/chengcoding-control-protocol`
+1. `crates/orangecoding-control-protocol`
    - 定义浏览器/Gateway/Worker 共用协议
    - 包括事件、命令、会话模型、审批模型
 
-2. `crates/chengcoding-control-server`
+2. `crates/orangecoding-control-server`
    - 提供 HTTP API、WebSocket、身份认证、流式分发
-   - 初期可被 `chengcoding-cli serve` 调用
+   - 初期可被 `orangecoding-cli serve` 调用
 
-3. `crates/chengcoding-worker`
+3. `crates/orangecoding-worker`
    - 作为 Agent Worker 宿主
    - 封装 `AgentLoop`、会话路由、工具审批桥接
 
 ### 4.2 对现有 crate 的修改
 
-1. `chengcoding-cli`
+1. `orangecoding-cli`
    - 新增 `serve` 子命令
    - 支持 `local` 和 `worker` 两种模式
 
-2. `chengcoding-agent`
+2. `orangecoding-agent`
    - 提供可嵌入的 `AgentRuntimeService`
    - 把运行时事件结构化导出
 
-3. `chengcoding-session`
+3. `orangecoding-session`
    - 增加浏览器可消费的会话索引、运行态和事件回放接口
 
-4. `chengcoding-audit`
+4. `orangecoding-audit`
    - 增加远程请求上下文、用户 ID、审批记录、连接来源
 
-5. `chengcoding-tools`
+5. `orangecoding-tools`
    - 将“需要用户确认”的工具调用改造为可挂起/恢复
 
-6. `chengcoding-mcp`
+6. `orangecoding-mcp`
    - 可选：为远程 MCP 打基础，新增 WebSocket/SSE transport
 
 ---
@@ -391,7 +391,7 @@ Worker 负责：
 2. `SessionSupervisor`
    - 管理会话生命周期
 3. `AgentRuntimeAdapter`
-   - 包装 `chengcoding-agent`
+   - 包装 `orangecoding-agent`
 4. `ApprovalBridge`
    - 处理工具审批挂起和恢复
 5. `EventPublisher`
@@ -587,7 +587,7 @@ RBAC 最小角色：
 
 ### 12.1 会话持久化
 
-复用 `chengcoding-session`，新增索引能力：
+复用 `orangecoding-session`，新增索引能力：
 
 1. `session_metadata`
 2. `latest_state`
@@ -657,7 +657,7 @@ RBAC 最小角色：
 
 ### 13.3 审计
 
-所有以下事件必须进入 `chengcoding-audit`：
+所有以下事件必须进入 `orangecoding-audit`：
 
 1. 登录成功/失败
 2. Worker 注册/撤销
@@ -740,7 +740,7 @@ RBAC 最小角色：
 
 负责：
 
-1. 新建 `chengcoding-control-protocol`
+1. 新建 `orangecoding-control-protocol`
 2. 定义 HTTP/WS/Worker 消息结构
 3. 定义会话、审批、事件、错误码
 4. 提供 serde 测试和兼容性测试
@@ -755,7 +755,7 @@ RBAC 最小角色：
 
 负责：
 
-1. 新建 `chengcoding-control-server`
+1. 新建 `orangecoding-control-server`
 2. 提供 HTTP 路由和 WebSocket
 3. 本地 token 鉴权
 4. Session API 和流式事件 fanout
@@ -770,8 +770,8 @@ RBAC 最小角色：
 
 负责：
 
-1. 新建 `chengcoding-worker`
-2. 对接 `chengcoding-agent`
+1. 新建 `orangecoding-worker`
+2. 对接 `orangecoding-agent`
 3. 会话生命周期管理
 4. 将 Agent 运行事件转换为控制协议事件
 
@@ -807,7 +807,7 @@ RBAC 最小角色：
 
 1. 历史查询 API 支撑
 2. 重放逻辑
-3. 兼容现有 `chengcoding-session`
+3. 兼容现有 `orangecoding-session`
 
 ### Agent 6: Security & Auth
 
@@ -846,7 +846,7 @@ RBAC 最小角色：
 
 ```text
 crates/
-  chengcoding-control-protocol/
+  orangecoding-control-protocol/
     src/
       browser.rs
       worker.rs
@@ -855,7 +855,7 @@ crates/
       event.rs
       error.rs
 
-  chengcoding-control-server/
+  orangecoding-control-server/
     src/
       lib.rs
       auth.rs
@@ -866,7 +866,7 @@ crates/
       worker_registry.rs
       event_hub.rs
 
-  chengcoding-worker/
+  orangecoding-worker/
     src/
       lib.rs
       runtime.rs
@@ -875,7 +875,7 @@ crates/
       approval_bridge.rs
       session_bridge.rs
 
-crates/chengcoding-cli/src/commands/
+crates/orangecoding-cli/src/commands/
   serve.rs
 ```
 
@@ -927,7 +927,7 @@ web/
 
 ## 18. 风险与应对
 
-### 风险 1：工具审批改造会牵动 `chengcoding-agent` 执行链
+### 风险 1：工具审批改造会牵动 `orangecoding-agent` 执行链
 
 应对：
 
@@ -938,7 +938,7 @@ web/
 
 应对：
 
-1. 保留 `chengcoding-session` 作为历史真相源
+1. 保留 `orangecoding-session` 作为历史真相源
 2. 新增事件日志层而不是硬改原存储
 
 ### 风险 3：Gateway 与 Worker 协议过早复杂化
@@ -987,9 +987,9 @@ MVP 指 **Local Web Control**，不是公网 SaaS。
 
 建议顺序：
 
-1. `chengcoding-control-protocol`
-2. `chengcoding-control-server` 本地模式
-3. `chengcoding-worker` 本地嵌入模式
+1. `orangecoding-control-protocol`
+2. `orangecoding-control-server` 本地模式
+3. `orangecoding-worker` 本地嵌入模式
 4. 审批桥改造
 5. UI
 6. 会话回放

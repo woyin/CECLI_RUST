@@ -56,16 +56,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: chengcoding-x86_64-linux
+            artifact: orangecoding-x86_64-linux
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            artifact: chengcoding-aarch64-linux
+            artifact: orangecoding-aarch64-linux
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact: chengcoding-x86_64-macos
+            artifact: orangecoding-x86_64-macos
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact: chengcoding-aarch64-macos
+            artifact: orangecoding-aarch64-macos
 
     steps:
       - uses: actions/checkout@v6
@@ -97,7 +97,7 @@ jobs:
           printf '[target.aarch64-unknown-linux-gnu]\nlinker = "aarch64-linux-gnu-gcc"\n' > .cargo/config.toml
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }} --locked -p chengcoding-cli
+        run: cargo build --release --target ${{ matrix.target }} --locked -p orangecoding-cli
 
       - name: Verify binary exists
         run: ls -lh target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}

@@ -65,7 +65,7 @@ sudo dnf install -y gcc openssl-devel pkg-config
 ### 方法一：通过 Cargo 安装（推荐）
 
 ```bash
-cargo install chengcoding-cli
+cargo install orangecoding-cli
 ```
 
 安装完成后，`orangecoding` 命令将添加到 `~/.cargo/bin/` 目录下。确保该目录已加入 `PATH`：
@@ -92,7 +92,7 @@ cargo build --release
 如需安装到系统路径：
 
 ```bash
-cargo install --path crates/chengcoding-cli
+cargo install --path crates/orangecoding-cli
 ```
 
 ### 方法三：开发模式运行
@@ -208,7 +208,7 @@ source ~/.zshrc
 
 ### 方法三：加密存储
 
-OrangeCoding 支持加密存储 API Key（通过 `chengcoding-config` 模块）。首次使用时会提示设置加密密码：
+OrangeCoding 支持加密存储 API Key（通过 `orangecoding-config` 模块）。首次使用时会提示设置加密密码：
 
 ```bash
 OrangeCoding config set-key openai sk-xxxxxxxxxxxxxxxx

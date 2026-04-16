@@ -20,11 +20,11 @@
 
 ## 概述
 
-Mesh 层（`chengcoding-mesh` crate）是多 Agent 系统的"神经网络"，负责 Agent 之间的一切协调工作：
+Mesh 层（`orangecoding-mesh` crate）是多 Agent 系统的"神经网络"，负责 Agent 之间的一切协调工作：
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                       chengcoding-mesh                              │
+│                       orangecoding-mesh                              │
 │                    多 Agent 协调基础设施                        │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐    │

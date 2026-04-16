@@ -4,34 +4,34 @@
 
 **Goal:** Add `OrangeCoding serve --bind 127.0.0.1:PORT` to provide browser-based local control of OrangeCoding agents via HTTP + WebSocket.
 
-**Architecture:** Three new crates (`chengcoding-control-protocol`, `chengcoding-control-server`, `chengcoding-worker`) sit atop the existing agent runtime. A `serve` CLI subcommand starts an HTTP/WS server on localhost. The browser connects via WebSocket for bidirectional streaming. The worker wraps `AgentLoop` and converts `AgentEvent` into control-protocol events. Approval is upgraded from synchronous CLI prompts to async suspend/resume over WebSocket.
+**Architecture:** Three new crates (`orangecoding-control-protocol`, `orangecoding-control-server`, `orangecoding-worker`) sit atop the existing agent runtime. A `serve` CLI subcommand starts an HTTP/WS server on localhost. The browser connects via WebSocket for bidirectional streaming. The worker wraps `AgentLoop` and converts `AgentEvent` into control-protocol events. Approval is upgraded from synchronous CLI prompts to async suspend/resume over WebSocket.
 
-**Tech Stack:** Rust, axum (HTTP/WS), tokio, serde/serde_json, tokio-tungstenite (via axum), uuid, chrono. Existing chengcoding-core/agent/session/audit/tools crates.
+**Tech Stack:** Rust, axum (HTTP/WS), tokio, serde/serde_json, tokio-tungstenite (via axum), uuid, chrono. Existing orangecoding-core/agent/session/audit/tools crates.
 
 ---
 
-## Task 1: Create `chengcoding-control-protocol` Crate — Types & Events
+## Task 1: Create `orangecoding-control-protocol` Crate — Types & Events
 
 **Files:**
-- Create: `crates/chengcoding-control-protocol/Cargo.toml`
-- Create: `crates/chengcoding-control-protocol/src/lib.rs`
-- Create: `crates/chengcoding-control-protocol/src/event.rs`
-- Create: `crates/chengcoding-control-protocol/src/command.rs`
-- Create: `crates/chengcoding-control-protocol/src/session.rs`
-- Create: `crates/chengcoding-control-protocol/src/approval.rs`
-- Create: `crates/chengcoding-control-protocol/src/error.rs`
+- Create: `crates/orangecoding-control-protocol/Cargo.toml`
+- Create: `crates/orangecoding-control-protocol/src/lib.rs`
+- Create: `crates/orangecoding-control-protocol/src/event.rs`
+- Create: `crates/orangecoding-control-protocol/src/command.rs`
+- Create: `crates/orangecoding-control-protocol/src/session.rs`
+- Create: `crates/orangecoding-control-protocol/src/approval.rs`
+- Create: `crates/orangecoding-control-protocol/src/error.rs`
 - Modify: `Cargo.toml` (workspace members)
-- Test: `crates/chengcoding-control-protocol/src/lib.rs` (inline tests)
+- Test: `crates/orangecoding-control-protocol/src/lib.rs` (inline tests)
 
 This crate defines the shared protocol types used between browser, server, and worker. No I/O, no async — pure data types with serde.
 
 ### Step 1: Write failing test for protocol message serialization
 
-Create `crates/chengcoding-control-protocol/Cargo.toml`:
+Create `crates/orangecoding-control-protocol/Cargo.toml`:
 
 ```toml
 [package]
-name = "chengcoding-control-protocol"
+name = "orangecoding-control-protocol"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -43,10 +43,10 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 thiserror = { workspace = true }
-chengcoding-core = { workspace = true }
+orangecoding-core = { workspace = true }
 ```
 
-Create `crates/chengcoding-control-protocol/src/lib.rs`:
+Create `crates/orangecoding-control-protocol/src/lib.rs`:
 
 ```rust
 pub mod approval;
@@ -126,7 +126,7 @@ mod tests {
 ### Step 2: Implement `event.rs` — Server-to-browser events
 
 ```rust
-// crates/chengcoding-control-protocol/src/event.rs
+// crates/orangecoding-control-protocol/src/event.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -266,7 +266,7 @@ pub enum HistoryEntry {
 ### Step 3: Implement `command.rs` — Browser-to-server commands
 
 ```rust
-// crates/chengcoding-control-protocol/src/command.rs
+// crates/orangecoding-control-protocol/src/command.rs
 use serde::{Deserialize, Serialize};
 
 /// Commands sent from the browser client to the server.
@@ -357,7 +357,7 @@ impl ClientCommand {
 ### Step 4: Implement `session.rs` — Session model
 
 ```rust
-// crates/chengcoding-control-protocol/src/session.rs
+// crates/orangecoding-control-protocol/src/session.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -393,7 +393,7 @@ pub struct SessionInfo {
 ### Step 5: Implement `approval.rs` — Approval model
 
 ```rust
-// crates/chengcoding-control-protocol/src/approval.rs
+// crates/orangecoding-control-protocol/src/approval.rs
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -431,7 +431,7 @@ pub enum ApprovalDecision {
 ### Step 6: Implement `error.rs` — Protocol error codes
 
 ```rust
-// crates/chengcoding-control-protocol/src/error.rs
+// crates/orangecoding-control-protocol/src/error.rs
 use serde::{Deserialize, Serialize};
 
 /// Protocol-level error codes.
@@ -466,16 +466,16 @@ impl ErrorCode {
 
 ### Step 7: Register in workspace and run tests
 
-Add `chengcoding-control-protocol` to workspace `Cargo.toml` members and dependencies.
+Add `orangecoding-control-protocol` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p chengcoding-control-protocol`
+Run: `cargo test -p orangecoding-control-protocol`
 Expected: All 4 tests pass.
 
 ### Step 8: Commit
 
 ```bash
-git add crates/chengcoding-control-protocol/ Cargo.toml Cargo.lock
-git commit -m "feat: add chengcoding-control-protocol crate with shared types
+git add crates/orangecoding-control-protocol/ Cargo.toml Cargo.lock
+git commit -m "feat: add orangecoding-control-protocol crate with shared types
 
 Define the browser/server/worker control protocol:
 - ClientCommand: browser-to-server commands (attach, create, message, cancel, approve)
@@ -488,15 +488,15 @@ Define the browser/server/worker control protocol:
 
 ---
 
-## Task 2: Create `chengcoding-worker` Crate — Agent Runtime Adapter
+## Task 2: Create `orangecoding-worker` Crate — Agent Runtime Adapter
 
 **Files:**
-- Create: `crates/chengcoding-worker/Cargo.toml`
-- Create: `crates/chengcoding-worker/src/lib.rs`
-- Create: `crates/chengcoding-worker/src/runtime.rs`
-- Create: `crates/chengcoding-worker/src/session_bridge.rs`
-- Create: `crates/chengcoding-worker/src/event_bridge.rs`
-- Create: `crates/chengcoding-worker/src/approval_bridge.rs`
+- Create: `crates/orangecoding-worker/Cargo.toml`
+- Create: `crates/orangecoding-worker/src/lib.rs`
+- Create: `crates/orangecoding-worker/src/runtime.rs`
+- Create: `crates/orangecoding-worker/src/session_bridge.rs`
+- Create: `crates/orangecoding-worker/src/event_bridge.rs`
+- Create: `crates/orangecoding-worker/src/approval_bridge.rs`
 - Modify: `Cargo.toml` (workspace members)
 - Test: inline unit tests
 
@@ -504,24 +504,24 @@ This crate wraps the existing `AgentLoop` and converts its events into control-p
 
 ### Step 1: Write failing test for event bridge
 
-Create `crates/chengcoding-worker/Cargo.toml`:
+Create `crates/orangecoding-worker/Cargo.toml`:
 
 ```toml
 [package]
-name = "chengcoding-worker"
+name = "orangecoding-worker"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-chengcoding-core = { workspace = true }
-chengcoding-agent = { workspace = true }
-chengcoding-tools = { workspace = true }
-chengcoding-session = { workspace = true }
-chengcoding-audit = { workspace = true }
-chengcoding-config = { workspace = true }
-chengcoding-control-protocol = { workspace = true }
+orangecoding-core = { workspace = true }
+orangecoding-agent = { workspace = true }
+orangecoding-tools = { workspace = true }
+orangecoding-session = { workspace = true }
+orangecoding-audit = { workspace = true }
+orangecoding-config = { workspace = true }
+orangecoding-control-protocol = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 serde = { workspace = true }
@@ -537,13 +537,13 @@ parking_lot = { workspace = true }
 tokio = { workspace = true, features = ["test-util", "macros"] }
 ```
 
-Create `crates/chengcoding-worker/src/event_bridge.rs` with tests:
+Create `crates/orangecoding-worker/src/event_bridge.rs` with tests:
 
 ```rust
 //! Converts AgentEvent into ServerEvent for the control protocol.
 
-use chengcoding_control_protocol::ServerEvent;
-use chengcoding_core::event::AgentEvent;
+use orangecoding_control_protocol::ServerEvent;
+use orangecoding_core::event::AgentEvent;
 use chrono::Utc;
 
 /// Convert an internal AgentEvent to a control-protocol ServerEvent.
@@ -613,7 +613,7 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chengcoding_core::{AgentId, SessionId, TokenUsage};
+    use orangecoding_core::{AgentId, SessionId, TokenUsage};
 
     #[test]
     fn test_stream_chunk_converts_to_delta() {
@@ -677,7 +677,7 @@ mod tests {
 ```rust
 //! Async approval bridge: suspends tool execution pending user decision.
 
-use chengcoding_control_protocol::{ApprovalDecision, ApprovalRequest, RiskLevel};
+use orangecoding_control_protocol::{ApprovalDecision, ApprovalRequest, RiskLevel};
 use dashmap::DashMap;
 use std::sync::Arc;
 use tokio::sync::oneshot;
@@ -802,7 +802,7 @@ mod tests {
 ```rust
 //! Manages active sessions and their associated agent loops.
 
-use chengcoding_control_protocol::{SessionInfo, SessionState};
+use orangecoding_control_protocol::{SessionInfo, SessionState};
 use chrono::Utc;
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -969,7 +969,7 @@ mod tests {
 use crate::approval_bridge::ApprovalBridge;
 use crate::event_bridge::agent_event_to_server_event;
 use crate::session_bridge::SessionSupervisor;
-use chengcoding_control_protocol::{ServerEvent, SessionState};
+use orangecoding_control_protocol::{ServerEvent, SessionState};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
 use tracing;
@@ -1007,7 +1007,7 @@ impl WorkerRuntime {
     pub fn spawn_event_forwarder(
         &self,
         session_id: String,
-        mut agent_rx: mpsc::Receiver<chengcoding_core::event::AgentEvent>,
+        mut agent_rx: mpsc::Receiver<orangecoding_core::event::AgentEvent>,
     ) {
         let event_tx = self.event_tx.clone();
         let sessions = self.sessions.clone();
@@ -1022,10 +1022,10 @@ impl WorkerRuntime {
 
                 // Update session state on completion/error
                 match &agent_event {
-                    chengcoding_core::event::AgentEvent::Completed { .. } => {
+                    orangecoding_core::event::AgentEvent::Completed { .. } => {
                         sessions.update_state(&session_id, SessionState::Idle);
                     }
-                    chengcoding_core::event::AgentEvent::Error { .. } => {
+                    orangecoding_core::event::AgentEvent::Error { .. } => {
                         sessions.update_state(&session_id, SessionState::Error);
                     }
                     _ => {}
@@ -1065,7 +1065,7 @@ mod tests {
 ### Step 5: Implement `lib.rs`
 
 ```rust
-// crates/chengcoding-worker/src/lib.rs
+// crates/orangecoding-worker/src/lib.rs
 pub mod approval_bridge;
 pub mod event_bridge;
 pub mod runtime;
@@ -1079,16 +1079,16 @@ pub use session_bridge::SessionSupervisor;
 
 ### Step 6: Register in workspace and run tests
 
-Add `chengcoding-worker` to workspace `Cargo.toml` members and dependencies.
+Add `orangecoding-worker` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p chengcoding-worker`
+Run: `cargo test -p orangecoding-worker`
 Expected: All tests pass.
 
 ### Step 7: Commit
 
 ```bash
-git add crates/chengcoding-worker/ Cargo.toml Cargo.lock
-git commit -m "feat: add chengcoding-worker crate with runtime adapter
+git add crates/orangecoding-worker/ Cargo.toml Cargo.lock
+git commit -m "feat: add orangecoding-worker crate with runtime adapter
 
 - EventBridge: converts AgentEvent to ServerEvent
 - ApprovalBridge: async suspend/resume for tool approvals
@@ -1098,16 +1098,16 @@ git commit -m "feat: add chengcoding-worker crate with runtime adapter
 
 ---
 
-## Task 3: Create `chengcoding-control-server` Crate — HTTP + WebSocket Server
+## Task 3: Create `orangecoding-control-server` Crate — HTTP + WebSocket Server
 
 **Files:**
-- Create: `crates/chengcoding-control-server/Cargo.toml`
-- Create: `crates/chengcoding-control-server/src/lib.rs`
-- Create: `crates/chengcoding-control-server/src/auth.rs`
-- Create: `crates/chengcoding-control-server/src/routes.rs`
-- Create: `crates/chengcoding-control-server/src/ws.rs`
-- Create: `crates/chengcoding-control-server/src/session_api.rs`
-- Create: `crates/chengcoding-control-server/src/approval_api.rs`
+- Create: `crates/orangecoding-control-server/Cargo.toml`
+- Create: `crates/orangecoding-control-server/src/lib.rs`
+- Create: `crates/orangecoding-control-server/src/auth.rs`
+- Create: `crates/orangecoding-control-server/src/routes.rs`
+- Create: `crates/orangecoding-control-server/src/ws.rs`
+- Create: `crates/orangecoding-control-server/src/session_api.rs`
+- Create: `crates/orangecoding-control-server/src/approval_api.rs`
 - Modify: `Cargo.toml` (workspace members and deps)
 - Test: inline tests + integration test
 
@@ -1122,20 +1122,20 @@ tower-http = { version = "0.5", features = ["cors", "trace"] }
 hyper = { version = "1.0", features = ["full"] }
 ```
 
-Create `crates/chengcoding-control-server/Cargo.toml`:
+Create `crates/orangecoding-control-server/Cargo.toml`:
 
 ```toml
 [package]
-name = "chengcoding-control-server"
+name = "orangecoding-control-server"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
-chengcoding-core = { workspace = true }
-chengcoding-control-protocol = { workspace = true }
-chengcoding-worker = { workspace = true }
+orangecoding-core = { workspace = true }
+orangecoding-control-protocol = { workspace = true }
+orangecoding-worker = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 tower = { workspace = true }
@@ -1227,8 +1227,8 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chengcoding_control_protocol::SessionInfo;
-use chengcoding_worker::WorkerRuntime;
+use orangecoding_control_protocol::SessionInfo;
+use orangecoding_worker::WorkerRuntime;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -1317,8 +1317,8 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chengcoding_control_protocol::ApprovalDecision;
-use chengcoding_worker::WorkerRuntime;
+use orangecoding_control_protocol::ApprovalDecision;
+use orangecoding_worker::WorkerRuntime;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -1353,8 +1353,8 @@ use axum::{
     },
     response::IntoResponse,
 };
-use chengcoding_control_protocol::{ClientCommand, ServerEvent};
-use chengcoding_worker::WorkerRuntime;
+use orangecoding_control_protocol::{ClientCommand, ServerEvent};
+use orangecoding_worker::WorkerRuntime;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::sync::Arc;
@@ -1482,7 +1482,7 @@ async fn handle_command(cmd: ClientCommand, runtime: &WorkerRuntime) {
             // Mark session as running
             runtime.sessions.update_state(
                 &session_id,
-                chengcoding_control_protocol::SessionState::Running,
+                orangecoding_control_protocol::SessionState::Running,
             );
             runtime.publish_event(ServerEvent::AgentStatus {
                 session_id: session_id.clone(),
@@ -1518,7 +1518,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
-use chengcoding_worker::WorkerRuntime;
+use orangecoding_worker::WorkerRuntime;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -1607,7 +1607,7 @@ async fn auth_middleware(
 ### Step 7: Implement `lib.rs` — Server entrypoint
 
 ```rust
-// crates/chengcoding-control-server/src/lib.rs
+// crates/orangecoding-control-server/src/lib.rs
 pub mod approval_api;
 pub mod auth;
 pub mod routes;
@@ -1615,7 +1615,7 @@ pub mod session_api;
 pub mod ws;
 
 use auth::LocalAuth;
-use chengcoding_worker::WorkerRuntime;
+use orangecoding_worker::WorkerRuntime;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -1659,16 +1659,16 @@ pub async fn start_server(
 
 ### Step 8: Register in workspace and run tests
 
-Add `chengcoding-control-server` to workspace `Cargo.toml` members and dependencies.
+Add `orangecoding-control-server` to workspace `Cargo.toml` members and dependencies.
 
-Run: `cargo test -p chengcoding-control-server && cargo check -p chengcoding-control-server`
+Run: `cargo test -p orangecoding-control-server && cargo check -p orangecoding-control-server`
 Expected: All tests pass, crate compiles.
 
 ### Step 9: Commit
 
 ```bash
-git add crates/chengcoding-control-server/ Cargo.toml Cargo.lock
-git commit -m "feat: add chengcoding-control-server with HTTP/WebSocket endpoints
+git add crates/orangecoding-control-server/ Cargo.toml Cargo.lock
+git commit -m "feat: add orangecoding-control-server with HTTP/WebSocket endpoints
 
 - LocalAuth: one-time token authentication for localhost mode
 - Session API: create, list, get, cancel, close sessions
@@ -1680,20 +1680,20 @@ git commit -m "feat: add chengcoding-control-server with HTTP/WebSocket endpoint
 
 ---
 
-## Task 4: Add `serve` Subcommand to `chengcoding-cli`
+## Task 4: Add `serve` Subcommand to `orangecoding-cli`
 
 **Files:**
-- Create: `crates/chengcoding-cli/src/commands/serve.rs`
-- Modify: `crates/chengcoding-cli/src/main.rs` (add Serve variant)
-- Modify: `crates/chengcoding-cli/src/commands/mod.rs` (if exists, add module)
-- Modify: `crates/chengcoding-cli/Cargo.toml` (add dependencies)
+- Create: `crates/orangecoding-cli/src/commands/serve.rs`
+- Modify: `crates/orangecoding-cli/src/main.rs` (add Serve variant)
+- Modify: `crates/orangecoding-cli/src/commands/mod.rs` (if exists, add module)
+- Modify: `crates/orangecoding-cli/Cargo.toml` (add dependencies)
 
 ### Step 1: Write the `serve.rs` command
 
 ```rust
-// crates/chengcoding-cli/src/commands/serve.rs
-use chengcoding_control_server::ControlServerConfig;
-use chengcoding_worker::WorkerRuntime;
+// crates/orangecoding-cli/src/commands/serve.rs
+use orangecoding_control_server::ControlServerConfig;
+use orangecoding_worker::WorkerRuntime;
 use clap::Args;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -1712,7 +1712,7 @@ pub async fn execute(args: ServeArgs) -> anyhow::Result<()> {
         bind_addr: args.bind,
     };
 
-    let token = chengcoding_control_server::start_server(config, runtime).await?;
+    let token = orangecoding_control_server::start_server(config, runtime).await?;
 
     println!("\n╔══════════════════════════════════════════════════╗");
     println!("║          OrangeCoding Control Server Started            ║");
@@ -1736,24 +1736,24 @@ pub async fn execute(args: ServeArgs) -> anyhow::Result<()> {
 
 ### Step 2: Add `Serve` variant to CLI command enum
 
-In `crates/chengcoding-cli/src/main.rs`, add:
+In `crates/orangecoding-cli/src/main.rs`, add:
 - `Serve(serve::ServeArgs)` to the `Commands` enum
 - `Commands::Serve(args) => serve::execute(args).await` to the match
 
-### Step 3: Add dependencies to `chengcoding-cli/Cargo.toml`
+### Step 3: Add dependencies to `orangecoding-cli/Cargo.toml`
 
 ```toml
-chengcoding-control-server = { workspace = true }
-chengcoding-worker = { workspace = true }
-chengcoding-control-protocol = { workspace = true }
+orangecoding-control-server = { workspace = true }
+orangecoding-worker = { workspace = true }
+orangecoding-control-protocol = { workspace = true }
 ```
 
 ### Step 4: Run build and manual smoke test
 
-Run: `cargo build -p chengcoding-cli`
+Run: `cargo build -p orangecoding-cli`
 Expected: Compiles successfully.
 
-Run: `cargo run -p chengcoding-cli -- serve --bind 127.0.0.1:3200`
+Run: `cargo run -p orangecoding-cli -- serve --bind 127.0.0.1:3200`
 Expected: Server starts, prints token and URL.
 
 Test health: `curl http://127.0.0.1:3200/health`
@@ -1762,7 +1762,7 @@ Expected: `ok`
 ### Step 5: Commit
 
 ```bash
-git add crates/chengcoding-cli/src/commands/serve.rs crates/chengcoding-cli/src/main.rs crates/chengcoding-cli/Cargo.toml Cargo.toml Cargo.lock
+git add crates/orangecoding-cli/src/commands/serve.rs crates/orangecoding-cli/src/main.rs crates/orangecoding-cli/Cargo.toml Cargo.toml Cargo.lock
 git commit -m "feat: add 'OrangeCoding serve' subcommand for local web control
 
 Starts HTTP + WebSocket server on localhost:3200 (configurable via --bind).
@@ -1774,15 +1774,15 @@ Displays auth token on startup. Ctrl+C for graceful shutdown."
 ## Task 5: Connect Agent Execution to WebSocket Flow
 
 **Files:**
-- Modify: `crates/chengcoding-control-server/src/ws.rs` (wire up agent invocation)
-- Modify: `crates/chengcoding-worker/src/runtime.rs` (add run_agent method)
-- Modify: `crates/chengcoding-cli/src/commands/serve.rs` (pass config for AI provider)
+- Modify: `crates/orangecoding-control-server/src/ws.rs` (wire up agent invocation)
+- Modify: `crates/orangecoding-worker/src/runtime.rs` (add run_agent method)
+- Modify: `crates/orangecoding-cli/src/commands/serve.rs` (pass config for AI provider)
 
 This task connects the `UserMessage` WebSocket command to actual `AgentLoop` execution.
 
 ### Step 1: Add `run_agent_turn` to WorkerRuntime
 
-In `crates/chengcoding-worker/src/runtime.rs`, add a method that:
+In `crates/orangecoding-worker/src/runtime.rs`, add a method that:
 1. Creates an `AgentContext` for the session
 2. Spins up `AgentLoop` with an `mpsc` channel for events
 3. Calls `spawn_event_forwarder` to pipe events to WebSocket
@@ -1794,11 +1794,11 @@ pub async fn run_agent_turn(
     &self,
     session_id: &str,
     user_content: &str,
-    ai_provider: Arc<dyn chengcoding_ai::AiProvider>,
-    tool_registry: Arc<chengcoding_tools::ToolRegistry>,
+    ai_provider: Arc<dyn orangecoding_ai::AiProvider>,
+    tool_registry: Arc<orangecoding_tools::ToolRegistry>,
 ) -> anyhow::Result<()> {
-    use chengcoding_agent::{AgentLoop, AgentLoopConfig, AgentContext};
-    use chengcoding_core::{AgentId, SessionId};
+    use orangecoding_agent::{AgentLoop, AgentLoopConfig, AgentContext};
+    use orangecoding_core::{AgentId, SessionId};
     use tokio::sync::mpsc;
 
     let sid = session_id.to_string();
@@ -1808,7 +1808,7 @@ pub async fn run_agent_turn(
     let cancel_token = self.sessions.get_cancel_token(&sid)
         .ok_or_else(|| anyhow::anyhow!("Session not found: {}", sid))?;
 
-    self.sessions.update_state(&sid, chengcoding_control_protocol::SessionState::Running);
+    self.sessions.update_state(&sid, orangecoding_control_protocol::SessionState::Running);
 
     // Create agent context
     let mut context = AgentContext::new(
@@ -1818,7 +1818,7 @@ pub async fn run_agent_turn(
     context.add_user_message(user_content);
 
     // Create agent loop
-    let executor = chengcoding_agent::ToolExecutor::new(tool_registry);
+    let executor = orangecoding_agent::ToolExecutor::new(tool_registry);
     let config = AgentLoopConfig::default();
     let mut agent = AgentLoop::new(
         AgentId::new(),
@@ -1836,14 +1836,14 @@ pub async fn run_agent_turn(
     let sessions = self.sessions.clone();
     let sid_clone = sid.clone();
     tokio::spawn(async move {
-        let chat_options = chengcoding_ai::ChatOptions::default();
+        let chat_options = orangecoding_ai::ChatOptions::default();
         match agent.run(&chat_options, cancel_token, event_tx).await {
             Ok(_result) => {
-                sessions.update_state(&sid_clone, chengcoding_control_protocol::SessionState::Idle);
+                sessions.update_state(&sid_clone, orangecoding_control_protocol::SessionState::Idle);
             }
             Err(e) => {
                 tracing::error!(session_id = %sid_clone, "Agent error: {}", e);
-                sessions.update_state(&sid_clone, chengcoding_control_protocol::SessionState::Error);
+                sessions.update_state(&sid_clone, orangecoding_control_protocol::SessionState::Error);
             }
         }
     });
@@ -1865,13 +1865,13 @@ Create a simple integration test that:
 3. Sends a `Ping` command
 4. Receives a `Pong` response
 
-Run: `cargo test -p chengcoding-control-server`
+Run: `cargo test -p orangecoding-control-server`
 Expected: All tests pass.
 
 ### Step 4: Commit
 
 ```bash
-git add crates/chengcoding-worker/ crates/chengcoding-control-server/ crates/chengcoding-cli/
+git add crates/orangecoding-worker/ crates/orangecoding-control-server/ crates/orangecoding-cli/
 git commit -m "feat: connect agent execution to WebSocket flow
 
 UserMessage commands now trigger AgentLoop execution.
@@ -1883,7 +1883,7 @@ Events are streamed back to WebSocket clients in real-time."
 ## Task 6: Integration Test — End-to-End Flow
 
 **Files:**
-- Create: `tests/integration/control_server_test.rs` or inline in `chengcoding-control-server`
+- Create: `tests/integration/control_server_test.rs` or inline in `orangecoding-control-server`
 
 ### Step 1: Write integration test
 
@@ -1945,11 +1945,11 @@ and control plane architecture."
 ## Dependency Graph
 
 ```
-Task 1: chengcoding-control-protocol  (no deps)
+Task 1: orangecoding-control-protocol  (no deps)
     ↓
-Task 2: chengcoding-worker            (depends on Task 1)
+Task 2: orangecoding-worker            (depends on Task 1)
     ↓
-Task 3: chengcoding-control-server    (depends on Task 1, 2)
+Task 3: orangecoding-control-server    (depends on Task 1, 2)
     ↓
 Task 4: CLI serve command       (depends on Task 3)
     ↓

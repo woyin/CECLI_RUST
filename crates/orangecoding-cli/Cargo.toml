@@ -1,0 +1,46 @@
+[package]
+name = "orangecoding-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI entry point for OrangeCoding"
+
+[[bin]]
+name = "orangecoding"
+path = "src/main.rs"
+
+[dependencies]
+orangecoding-core = { workspace = true }
+orangecoding-agent = { workspace = true }
+orangecoding-tools = { workspace = true }
+orangecoding-ai = { workspace = true }
+orangecoding-mesh = { workspace = true }
+orangecoding-config = { workspace = true }
+orangecoding-audit = { workspace = true }
+orangecoding-tui = { workspace = true }
+orangecoding-mcp = { workspace = true }
+orangecoding-control-server = { workspace = true }
+orangecoding-worker = { workspace = true }
+async-trait = { workspace = true }
+tokio-util = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+ring = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+base64 = { workspace = true }
+dashmap = { workspace = true }
+dirs = "5.0"
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

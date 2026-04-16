@@ -39,8 +39,8 @@ OrangeCoding 的权限系统分为三层防护：
 ```
 
 权限系统的实现跨越两个 crate：
-- `chengcoding-tools`：`permissions.rs`（权限定义）和 `security.rs`（安全策略）
-- `chengcoding-agent`：`hooks.rs`（权限 Hook 集成）
+- `orangecoding-tools`：`permissions.rs`（权限定义）和 `security.rs`（安全策略）
+- `orangecoding-agent`：`hooks.rs`（权限 Hook 集成）
 
 ---
 
@@ -577,7 +577,7 @@ OrangeCoding 采用基于白名单的沙箱模型：
 | `task` | ✅ | ❌ | ✅ | ✅ | ❌ |
 | `ask` | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-角色定义位于 `chengcoding-mesh` crate 的 `role_system.rs` 模块中。
+角色定义位于 `orangecoding-mesh` crate 的 `role_system.rs` 模块中。
 
 ---
 

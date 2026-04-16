@@ -538,14 +538,14 @@ Ralph 循环是一个迭代式的持续改进工作流，自动执行 plan → i
 
 ## 任务协商和重分配
 
-OrangeCoding 通过 `chengcoding-mesh` 模块支持多 Agent 间的任务协商和动态重分配。
+OrangeCoding 通过 `orangecoding-mesh` 模块支持多 Agent 间的任务协商和动态重分配。
 
 ### 通信机制
 
 ```
 ┌──────────┐     消息总线      ┌──────────┐
 │ Agent A  │ ←──────────────→ │ Agent B  │
-│          │   chengcoding-mesh     │          │
+│          │   orangecoding-mesh     │          │
 └──────────┘                  └──────────┘
       ↑                            ↑
       │        ┌──────────┐        │

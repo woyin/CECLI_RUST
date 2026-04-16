@@ -24,7 +24,7 @@
 为 Tool trait 增加元数据方法，支持并发安全性、只读性、破坏性等属性声明。
 
 **设计**:
-1. 在 `chengcoding-tools/src/lib.rs` 中定义 `ToolMetadata` 结构体
+1. 在 `orangecoding-tools/src/lib.rs` 中定义 `ToolMetadata` 结构体
 2. 为 Tool trait 增加 `fn metadata(&self) -> ToolMetadata` 默认方法
 3. ToolMetadata 包含: `is_read_only`, `is_concurrency_safe`, `is_destructive`, `is_enabled`
 4. 提供安全默认值（TOOL_DEFAULTS 模式）: read_only=false, concurrency_safe=false, destructive=false, enabled=true
@@ -149,7 +149,7 @@
 实现实时截断旧工具输出的微压缩层，无需 AI 参与。
 
 **设计**:
-1. 在 `chengcoding-agent/src/compaction.rs` 中新增 `MicroCompactor` 结构体
+1. 在 `orangecoding-agent/src/compaction.rs` 中新增 `MicroCompactor` 结构体
 2. 定义可压缩工具白名单: `["file_read", "bash", "grep", "glob", "web_search", "fetch"]`
 3. 配置项: `preserve_recent: usize`（保留最近 N 个工具结果不压缩）
 4. 压缩规则: 超过 preserve_recent 的旧工具结果，内容替换为 `"[旧工具结果已清除]"`
@@ -175,7 +175,7 @@
 实现 token 预算跟踪和续写决策状态机。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/token_budget.rs`
+1. 新建 `orangecoding-agent/src/token_budget.rs`
 2. 定义 `TokenBudget` 结构体: `context_window`, `reserved_tokens`, `usage_history: Vec<usize>`
 3. 定义 `BudgetDecision` 枚举: `Continue(String)`, `Stop(String)`
 4. 实现 `check_budget(&self) -> BudgetDecision`:
@@ -204,7 +204,7 @@
 按 API 轮次将消息分组，为反应式压缩提供精细粒度。
 
 **设计**:
-1. 在 `chengcoding-agent/src/compaction.rs` 中新增 `MessageGrouper`
+1. 在 `orangecoding-agent/src/compaction.rs` 中新增 `MessageGrouper`
 2. 分组规则: 每次新的 assistant 消息（不同的 message_id）开始新的组
 3. 组内包含: assistant message + tool_use messages + tool_result messages
 4. 首组特殊: 包含 system + user + 第一个 assistant
@@ -288,7 +288,7 @@
 实现任务生命周期管理：ID 生成、状态机、任务注册表。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/task_system.rs`
+1. 新建 `orangecoding-agent/src/task_system.rs`
 2. 定义 `TaskId`: 前缀(1 char) + 8 位随机小写字母数字
    - 前缀: 'a'=agent, 't'=teammate, 'b'=bash, 'd'=dream
 3. 定义 `TaskStatus` 枚举: `Pending`, `Running`, `Completed`, `Failed`, `Killed`
@@ -315,7 +315,7 @@
 实现父子 Agent 之间的级联取消机制。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/cancellation.rs`
+1. 新建 `orangecoding-agent/src/cancellation.rs`
 2. 使用 `tokio_util::sync::CancellationToken` 或自实现
 3. 定义 `CancellationHierarchy`:
    - `create_root() -> CancellationToken`
@@ -343,7 +343,7 @@
 实现 Fork 子 Agent 派生模式：继承父对话历史，独立执行。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/fork.rs`
+1. 新建 `orangecoding-agent/src/fork.rs`
 2. 定义 `ForkConfig`: max_turns, tool_filter(allow/deny), skip_transcript
 3. 定义 `ForkResult`: messages, final_response, token_usage
 4. 实现 `fork_agent(parent_context, config) -> ForkResult`:
@@ -372,7 +372,7 @@
 实现基于文件的 Agent 间异步消息传递系统。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/mailbox.rs`
+1. 新建 `orangecoding-agent/src/mailbox.rs`
 2. 邮箱路径: `~/.orangecoding/teams/{team_name}/inboxes/{agent_name}.json`
 3. 消息结构: `MailboxMessage { from, text, timestamp, read, summary }`
 4. 操作:
@@ -429,7 +429,7 @@
 实现基于文件的 Memdir 存储，每个记忆一个 Markdown 文件。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/memdir.rs`
+1. 新建 `orangecoding-agent/src/memdir.rs`
 2. 存储路径: `~/.orangecoding/projects/{project_hash}/memory/`
 3. 文件格式:
    ```
@@ -496,7 +496,7 @@
 实现会话内短期笔记系统，按阈值触发提取。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/session_memory.rs`
+1. 新建 `orangecoding-agent/src/session_memory.rs`
 2. 存储: `~/.orangecoding/session_memory/{session_id}.md`
 3. `SessionMemory` 结构体:
    - `notes: Vec<String>`
@@ -556,7 +556,7 @@
 实现 AutoDream 的触发门控条件和分布式文件锁。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/auto_dream.rs`
+1. 新建 `orangecoding-agent/src/auto_dream.rs`
 2. 门控条件链（从便宜到贵）:
    - 记忆系统已启用？
    - 距上次整合 ≥ 24 小时？
@@ -619,7 +619,7 @@
 实现基于 Fork 模式的自动验证 Agent。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/verification.rs`
+1. 新建 `orangecoding-agent/src/verification.rs`
 2. 定义 `VerificationCheck` 枚举:
    - `DesignCompliance` — 是否符合设计文档
    - `BreakingChanges` — 是否破坏现有模块
@@ -652,7 +652,7 @@
 为工具执行生成 git-commit 风格的简短摘要。
 
 **设计**:
-1. 在 `chengcoding-agent/src/tool_summary.rs` 中实现
+1. 在 `orangecoding-agent/src/tool_summary.rs` 中实现
 2. 输入: tool_name, input(截断到 300 字符), output(截断到 300 字符), recent_assistant_msg(200 字符)
 3. 输出: 1 行摘要（如 "Searched in auth/", "Fixed NPE in UserService"）
 4. 实现 `ToolSummaryGenerator`:
@@ -682,7 +682,7 @@
 基于用户 ID hash 生成不可篡改的确定性 Buddy 身份。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/buddy.rs`
+1. 新建 `orangecoding-agent/src/buddy.rs`
 2. 实现 Mulberry32 PRNG（32 位乘法 PRNG）
 3. 种子: `hash(user_id + SALT)` 使用 SHA-256
 4. 从 PRNG 确定性选择:
@@ -742,7 +742,7 @@
 实现模型响应后、工具执行前的后采样钩子链。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/post_sampling.rs`
+1. 新建 `orangecoding-agent/src/post_sampling.rs`
 2. 定义 `PostSamplingHook` trait:
    `async fn on_response(&self, ctx: &PostSamplingContext) -> PostSamplingResult`
 3. `PostSamplingContext`: messages, tool_calls, app_state ref
@@ -771,7 +771,7 @@
 实现基于上下文的下一步操作预测系统。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/prompt_suggestion.rs`
+1. 新建 `orangecoding-agent/src/prompt_suggestion.rs`
 2. 生成流程:
    - Fork 子 Agent，全部工具 deny
    - 提示: "预测用户下一步操作，2-12 个词"
@@ -805,7 +805,7 @@
 实现基于上下文和冷却期的提示系统。
 
 **设计**:
-1. 新建 `chengcoding-agent/src/tips.rs`
+1. 新建 `orangecoding-agent/src/tips.rs`
 2. `Tip` 结构体: id, text, context_tags, min_session_gap
 3. `TipStore`:
    - 内置提示库（~20 条常用提示）

@@ -30,7 +30,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 
 ```
                            ┌─────────────────────────┐
-                           │       chengcoding-cli          │
+                           │       orangecoding-cli          │
                            │    (命令行入口点)          │
                            │  Commands: launch,       │
                            │  config, status          │
@@ -42,7 +42,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
             │                          │                          │
             ▼                          ▼                          ▼
    ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-   │    chengcoding-tui     │    │   chengcoding-agent    │    │   chengcoding-config      │
+   │    orangecoding-tui     │    │   orangecoding-agent    │    │   orangecoding-config      │
    │  (终端用户界面)   │    │  (Agent 核心循环) │    │  (配置管理)          │
    │                  │    │                  │    │                     │
    │ • Ratatui 渲染   │    │ • AgentLoop      │    │ • 多层配置合并       │
@@ -58,7 +58,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
             │                      │                          │
             ▼                      ▼                          ▼
    ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-   │   chengcoding-mesh    │    │   chengcoding-tools    │    │     chengcoding-ai        │
+   │   orangecoding-mesh    │    │   orangecoding-tools    │    │     orangecoding-ai        │
    │  (多Agent协调)   │    │  (工具系统)       │    │  (AI 提供商适配)     │
    │                  │    │                  │    │                     │
    │ • MessageBus    │    │ • 16+ 工具实现    │    │ • OpenAI 适配       │
@@ -76,7 +76,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
             │                      │              │
             ▼                      ▼              ▼
    ┌─────────────────┐    ┌──────────────┐   ┌──────────────────┐
-   │  chengcoding-session   │    │  chengcoding-core  │   │   chengcoding-audit    │
+   │  orangecoding-session   │    │  orangecoding-core  │   │   orangecoding-audit    │
    │  (会话管理)      │    │  (基础类型)   │   │  (审计日志)       │
    │                  │    │              │   │                  │
    │ • JSONL 存储     │    │ • AgentId    │   │ • HashChain      │
@@ -89,7 +89,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
                            └──────────────┘
 
    ┌──────────────────┐
-   │    chengcoding-mcp     │
+   │    orangecoding-mcp     │
    │  (MCP 协议实现)   │
    │                  │
    │ • JSON-RPC 2.0   │
@@ -103,7 +103,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 
 ## 各 Crate 职责
 
-### chengcoding-core（基础类型）
+### orangecoding-core（基础类型）
 
 系统的基石，定义所有共享的基础类型和抽象。
 
@@ -116,7 +116,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 
 **设计原则**：零外部 AI/网络依赖，仅使用 serde、chrono、uuid 等基础库。
 
-### chengcoding-agent（Agent 核心循环）
+### orangecoding-agent（Agent 核心循环）
 
 实现 Agent 的主事件循环、生命周期管理和专业化 Agent。
 
@@ -135,7 +135,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `skills.rs` | — | 技能定义 |
 | `workflows/` | — | 预配置工作流（Atlas、Boulder、Prometheus 等） |
 
-### chengcoding-tools（工具系统）
+### orangecoding-tools（工具系统）
 
 实现所有可供 Agent 使用的工具。
 
@@ -147,7 +147,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `permissions.rs` | `PermissionKind`, `PermissionLevel`, `PermissionPolicy` | 权限系统 |
 | `*_tool.rs` | 16+ 具体工具 | 各功能工具实现 |
 
-### chengcoding-ai（AI 提供商适配）
+### orangecoding-ai（AI 提供商适配）
 
 统一抽象多个 AI 服务提供商。
 
@@ -163,7 +163,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `providers/qianwen.rs` | `QianwenProvider` | 通义千问 API 适配 |
 | `providers/wenxin.rs` | `WenxinProvider` | 文心一言 API 适配 |
 
-### chengcoding-mesh（多 Agent 协调）
+### orangecoding-mesh（多 Agent 协调）
 
 管理多 Agent 间的通信、协调和任务编排。
 
@@ -179,7 +179,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `negotiation.rs` | `NegotiationProtocol` | 请求-提议-接受协议 |
 | `task_handoff.rs` | `TaskHandoff` | 任务重分配管理 |
 
-### chengcoding-config（配置管理）
+### orangecoding-config（配置管理）
 
 多层次配置管理，支持加密存储。
 
@@ -192,7 +192,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `models_config.rs` | `ModelsConfig` | AI 模型定义 |
 | `jsonc.rs` | — | JSON with Comments 解析 |
 
-### chengcoding-audit（审计日志）
+### orangecoding-audit（审计日志）
 
 不可篡改的审计日志系统。
 
@@ -203,7 +203,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `sanitizer.rs` | `Sanitizer` | 敏感信息脱敏 |
 | `secrets.rs` | `SecretSource`, `ObfuscationMode`, `SecretEntry` | 密钥检测 |
 
-### chengcoding-session（会话管理）
+### orangecoding-session（会话管理）
 
 基于 JSONL 的会话持久化和多分支支持。
 
@@ -214,7 +214,7 @@ OrangeCoding（Code Engineering AI Runtime）是一个基于 Rust 的多 Agent A
 | `manager.rs` | `SessionManager`, `SessionInfo`, `Session` | 会话生命周期 |
 | `tree.rs` | `SessionTree` | 多分支会话树 |
 
-### chengcoding-mcp（MCP 协议）
+### orangecoding-mcp（MCP 协议）
 
 Model Context Protocol 的 Rust 实现。
 
@@ -225,7 +225,7 @@ Model Context Protocol 的 Rust 实现。
 | `client.rs` | `McpClient`, `ClientConfig` | MCP 客户端 |
 | `transport.rs` | `Transport` trait, `StdioTransport` | 传输层抽象 |
 
-### chengcoding-tui（终端界面）
+### orangecoding-tui（终端界面）
 
 基于 Ratatui 的终端用户界面。
 
@@ -236,7 +236,7 @@ Model Context Protocol 的 Rust 实现。
 | `theme.rs` | `Theme`, `ThemeVariant`, `ColorMode` | 主题系统 |
 | `components/` | — | UI 组件（会话、输入、状态栏） |
 
-### chengcoding-cli（命令行入口）
+### orangecoding-cli（命令行入口）
 
 程序入口点和命令行接口。
 
@@ -255,20 +255,20 @@ Model Context Protocol 的 Rust 实现。
 ### Crate 依赖图
 
 ```
-chengcoding-cli ──────┬──► chengcoding-tui
-                ├──► chengcoding-agent ──┬──► chengcoding-tools ──► chengcoding-core
-                ├──► chengcoding-config  │                      ▲
-                └──► chengcoding-mcp     ├──► chengcoding-ai ─────────┘
-                                   ├──► chengcoding-mesh ───────┘
-                                   ├──► chengcoding-session ────┘
-                                   └──► chengcoding-audit ──────┘
+orangecoding-cli ──────┬──► orangecoding-tui
+                ├──► orangecoding-agent ──┬──► orangecoding-tools ──► orangecoding-core
+                ├──► orangecoding-config  │                      ▲
+                └──► orangecoding-mcp     ├──► orangecoding-ai ─────────┘
+                                   ├──► orangecoding-mesh ───────┘
+                                   ├──► orangecoding-session ────┘
+                                   └──► orangecoding-audit ──────┘
 ```
 
 ### 依赖规则
 
 | 规则 | 描述 |
 |------|------|
-| `chengcoding-core` 无项目内依赖 | 基石层，被所有其他 crate 依赖 |
+| `orangecoding-core` 无项目内依赖 | 基石层，被所有其他 crate 依赖 |
 | 无循环依赖 | Cargo workspace 强制保证 |
 | 上层可依赖下层 | cli → agent → tools → core |
 | 平层可互相独立 | mesh、session、audit 互不依赖 |
@@ -303,15 +303,15 @@ chengcoding-cli ──────┬──► chengcoding-tui
   用户输入                 "帮我修复 src/main.rs 中的编译错误"
      │
      ▼
-┌─── chengcoding-cli ────────────────────────────────────────────────┐
+┌─── orangecoding-cli ────────────────────────────────────────────────┐
 │  1. 解析命令行参数                                             │
-│  2. 加载配置（chengcoding-config）                                   │
+│  2. 加载配置（orangecoding-config）                                   │
 │  3. 初始化日志（tracing）                                      │
-│  4. 创建/恢复会话（chengcoding-session）                              │
+│  4. 创建/恢复会话（orangecoding-session）                              │
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-agent ──────────────────────────────────────────────┐
+┌─── orangecoding-agent ──────────────────────────────────────────────┐
 │  5. IntentGate 分类                                           │
 │     意图: Fix, 置信度: 0.92                                    │
 │     推荐类别: "unspecified-low"                                │
@@ -325,7 +325,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-mesh ───────────────────────────────────────────────┐
+┌─── orangecoding-mesh ───────────────────────────────────────────────┐
 │  8. ModelRouter 路由                                          │
 │     任务类型: Coding, 复杂度: 30                               │
 │     选中模型: claude-sonnet-4-6                               │
@@ -335,7 +335,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-ai ─────────────────────────────────────────────────┐
+┌─── orangecoding-ai ─────────────────────────────────────────────────┐
 │  10. AnthropicProvider.chat_completion_stream()               │
 │      发送: 系统提示 + 上下文 + 用户消息 + 工具定义              │
 │      接收: 流式 AI 响应                                        │
@@ -345,7 +345,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-tools ──────────────────────────────────────────────┐
+┌─── orangecoding-tools ──────────────────────────────────────────────┐
 │  12. AI 请求工具调用: bash { command: "cargo build" }         │
 │                                                               │
 │  13. HookRegistry 执行 PreToolCall Hooks                     │
@@ -362,7 +362,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-audit ──────────────────────────────────────────────┐
+┌─── orangecoding-audit ──────────────────────────────────────────────┐
 │  17. AuditLogger 记录                                         │
 │      • 工具调用详情                                            │
 │      • Token 使用量                                           │
@@ -374,7 +374,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-session ────────────────────────────────────────────┐
+┌─── orangecoding-session ────────────────────────────────────────────┐
 │  19. Session 记录                                             │
 │      • 用户消息条目                                            │
 │      • AI 响应条目                                            │
@@ -383,7 +383,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
-┌─── chengcoding-tui ────────────────────────────────────────────────┐
+┌─── orangecoding-tui ────────────────────────────────────────────────┐
 │  20. MarkdownRenderer 渲染 AI 响应                            │
 │  21. 显示工具调用结果                                          │
 │  22. 更新状态栏（Token 使用量、Agent 状态）                     │
@@ -403,7 +403,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 │  │                                                      │    │
 │  │  ┌──── 沙箱边界 ──────────────────────────────────┐  │    │
 │  │  │                                                │  │    │
-│  │  │  chengcoding-agent (Agent 循环)                      │  │    │
+│  │  │  orangecoding-agent (Agent 循环)                      │  │    │
 │  │  │       ↓                                        │  │    │
 │  │  │  ╔═══ 安全层 1: Hook 系统 ═══════════════════╗ │  │    │
 │  │  │  ║ PreToolCall Hooks (权限检查、安全扫描)      ║ │  │    │
@@ -417,7 +417,7 @@ chengcoding-cli ──────┬──► chengcoding-tui
 │  │  │  ║ 权限级别: Allow / Ask / Deny              ║ │  │    │
 │  │  │  ╚═══════════════════════════════════════════╝ │  │    │
 │  │  │       ↓                                        │  │    │
-│  │  │  chengcoding-tools (工具执行)                        │  │    │
+│  │  │  orangecoding-tools (工具执行)                        │  │    │
 │  │  │       ↓                                        │  │    │
 │  │  │  ╔═══ 安全层 4: 审计链 ══════════════════════╗ │  │    │
 │  │  │  ║ HashChain + Sanitizer + SecretDetector    ║ │  │    │
@@ -426,14 +426,14 @@ chengcoding-cli ──────┬──► chengcoding-tui
 │  │  └── 沙箱边界 ────────────────────────────────────┘  │    │
 │  │                                                      │    │
 │  │  ┌──── 网络边界 ──────────────────────────────────┐  │    │
-│  │  │  chengcoding-ai (AI API 请求，HTTPS 强制)            │  │    │
-│  │  │  chengcoding-mcp (MCP 通信，OAuth 认证)              │  │    │
+│  │  │  orangecoding-ai (AI API 请求，HTTPS 强制)            │  │    │
+│  │  │  orangecoding-mcp (MCP 通信，OAuth 认证)              │  │    │
 │  │  └────────────────────────────────────────────────┘  │    │
 │  │                                                      │    │
 │  │  ┌──── 存储边界 ──────────────────────────────────┐  │    │
-│  │  │  chengcoding-config (加密密钥存储，AES-256)          │  │    │
-│  │  │  chengcoding-session (会话文件，用户权限)             │  │    │
-│  │  │  chengcoding-audit (审计日志，只追加)                 │  │    │
+│  │  │  orangecoding-config (加密密钥存储，AES-256)          │  │    │
+│  │  │  orangecoding-session (会话文件，用户权限)             │  │    │
+│  │  │  orangecoding-audit (审计日志，只追加)                 │  │    │
 │  │  └────────────────────────────────────────────────┘  │    │
 │  │                                                      │    │
 │  └──── 用户空间 ────────────────────────────────────────┘    │

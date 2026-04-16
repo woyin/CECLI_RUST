@@ -3,8 +3,8 @@
 //! INV-APPROVAL-01: 审批请求必须可等待
 //! INV-APPROVAL-02: 审批结果必须送达请求方
 
-use chengcoding_control_protocol::{ApprovalDecision, RiskLevel};
-use chengcoding_worker::ApprovalBridge;
+use orangecoding_control_protocol::{ApprovalDecision, RiskLevel};
+use orangecoding_worker::ApprovalBridge;
 
 // =========================================================================
 // INV-APPROVAL-01: 审批请求必须可等待

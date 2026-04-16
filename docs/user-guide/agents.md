@@ -25,7 +25,7 @@
 
 ## 概述
 
-OrangeCoding 的 Agent 系统采用 **专业化分工 + 协作编排** 的架构设计。每个 Agent 都有明确的职责边界和工具权限，通过 `chengcoding-mesh` 消息总线实现 Agent 间的通信和任务协商。
+OrangeCoding 的 Agent 系统采用 **专业化分工 + 协作编排** 的架构设计。每个 Agent 都有明确的职责边界和工具权限，通过 `orangecoding-mesh` 消息总线实现 Agent 间的通信和任务协商。
 
 ### 核心概念
 
@@ -462,7 +462,7 @@ Prometheus → task("审核计划") → Momus
 
 ### Agent 间通信
 
-通过 `chengcoding-mesh` 消息总线实现：
+通过 `orangecoding-mesh` 消息总线实现：
 
 - **直接消息**：Agent 间的点对点通信
 - **任务协商**：多 Agent 讨论任务分配

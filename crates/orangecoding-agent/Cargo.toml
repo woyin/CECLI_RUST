@@ -1,0 +1,32 @@
+[package]
+name = "orangecoding-agent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Agent core loop and execution for OrangeCoding"
+
+[dependencies]
+orangecoding-core = { workspace = true }
+orangecoding-tools = { workspace = true }
+orangecoding-ai = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ring = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+toml = { workspace = true }
+dashmap = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = { workspace = true }
+tempfile = { workspace = true }

@@ -241,7 +241,7 @@ verify_commands = []
 ## 7. 文件结构
 
 ```
-crates/chengcoding-agent/src/
+crates/orangecoding-agent/src/
 ├── workflows/
 │   ├── mod.rs                  # 新增 pub mod autopilot
 │   ├── autopilot.rs            # 新增：Autopilot 状态机 + 配置
@@ -252,7 +252,7 @@ crates/chengcoding-agent/src/
 │   ├── atlas.rs                # 已有：复用执行编排
 │   └── boulder.rs              # 已有：复用状态持久化
 
-crates/chengcoding-cli/src/
+crates/orangecoding-cli/src/
 ├── commands/
 │   └── launch.rs               # 修改：添加 --autopilot 参数处理
 ├── slash_builtins.rs           # 修改：添加 /autopilot 命令
@@ -328,7 +328,7 @@ commit_message_template = "autopilot: cycle {cycle} - {summary}"
 
 ### Phase 3：配置与事件（预估 2 个文件）
 
-7. `config.rs` (ceair-config) — 添加 AutopilotConfig 到 CeairConfig
+7. `config.rs` (ceair-config) — 添加 AutopilotConfig 到 OrangeConfig
 8. `event.rs` (ceair-core) — 添加 Autopilot 相关事件变体
 
 ### 验收标准

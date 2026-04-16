@@ -9,9 +9,9 @@ Result: **PASS**
 `serve.rs` 中 `LocalAgentExecutor::execute_turn` 每次调用 `SessionId::new()` 和 `AgentContext::new()`，忽略了传入的 `session_id` 参数，导致多轮对话历史丢失。
 
 ## 修改文件
-1. `crates/chengcoding-core/src/types.rs` — 新增 `SessionId::from_string()` 用于从字符串恢复类型安全的 SessionId
-2. `crates/chengcoding-cli/src/commands/serve.rs` — 新增 `session_contexts: DashMap` 字段，execute_turn 恢复已有上下文
-3. `crates/chengcoding-cli/Cargo.toml` — 新增 `dashmap` 依赖
+1. `crates/orangecoding-core/src/types.rs` — 新增 `SessionId::from_string()` 用于从字符串恢复类型安全的 SessionId
+2. `crates/orangecoding-cli/src/commands/serve.rs` — 新增 `session_contexts: DashMap` 字段，execute_turn 恢复已有上下文
+3. `crates/orangecoding-cli/Cargo.toml` — 新增 `dashmap` 依赖
 
 ## 是否存在遗漏路径
 ✅ 无遗漏。上下文存储在 `LocalAgentExecutor` 实例中，该实例通过 `Arc` 共享在 `WorkerRuntime` 中，所有 WebSocket 消息（`UserMessage`）都会通过 `run_agent_turn` 到达同一个 executor。

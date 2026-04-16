@@ -21,7 +21,7 @@
 
 ## 概述
 
-OrangeCoding 的 Agent 系统位于 `chengcoding-agent` crate 中，是整个系统的核心。它实现了：
+OrangeCoding 的 Agent 系统位于 `orangecoding-agent` crate 中，是整个系统的核心。它实现了：
 
 ```
 ┌───────────────────────────────────────────────────────────────┐

@@ -17,20 +17,20 @@
 
 | 模块 | 说明 | 核心功能 |
 |------|------|---------|
-| **chengcoding-core** | 核心类型 | 消息系统、错误处理、事件总线 |
-| **chengcoding-session** | 会话管理 | JSONL 树形存储、分支、Blob 存储 |
-| **chengcoding-ai** | AI 提供者 | OpenAI/Anthropic/DeepSeek/通义千问/文心一言、模型角色路由、Fallback 链 |
-| **chengcoding-agent** | 代理引擎 | 11 专业 Agent、Category 路由、Intent Gate、工作流编排、Hook/技能系统 |
-| **chengcoding-tools** | 工具集 | 22+ 内置工具、权限系统、安全沙箱 |
-| **chengcoding-config** | 配置管理 | JSONC 解析、多工具配置发现、加密存储、模型配置 |
-| **chengcoding-audit** | 审计安全 | 日志链、数据脱敏、密钥混淆 |
-| **chengcoding-mesh** | 多代理协作 | Agent 通信、任务协商、任务重分配、消息总线、共享状态 |
-| **chengcoding-mcp** | MCP 协议 | JSON-RPC 2.0、stdio/SSE 传输 |
-| **chengcoding-tui** | 终端界面 | Markdown 渲染、主题系统、会话选择器 |
-| **chengcoding-cli** | 命令行 | 斜杠命令、RPC 模式、OAuth 认证、Zellij/Tmux 集成 |
-| **chengcoding-control-protocol** | 控制协议 | 浏览器/服务器/Worker 共用消息类型、会话/审批/事件模型 |
-| **chengcoding-control-server** | 控制服务 | HTTP API、WebSocket、本地令牌鉴权、流式事件分发 |
-| **chengcoding-worker** | Worker 运行时 | Agent 生命周期管理、审批桥接、事件转换 |
+| **orangecoding-core** | 核心类型 | 消息系统、错误处理、事件总线 |
+| **orangecoding-session** | 会话管理 | JSONL 树形存储、分支、Blob 存储 |
+| **orangecoding-ai** | AI 提供者 | OpenAI/Anthropic/DeepSeek/通义千问/文心一言、模型角色路由、Fallback 链 |
+| **orangecoding-agent** | 代理引擎 | 11 专业 Agent、Category 路由、Intent Gate、工作流编排、Hook/技能系统 |
+| **orangecoding-tools** | 工具集 | 22+ 内置工具、权限系统、安全沙箱 |
+| **orangecoding-config** | 配置管理 | JSONC 解析、多工具配置发现、加密存储、模型配置 |
+| **orangecoding-audit** | 审计安全 | 日志链、数据脱敏、密钥混淆 |
+| **orangecoding-mesh** | 多代理协作 | Agent 通信、任务协商、任务重分配、消息总线、共享状态 |
+| **orangecoding-mcp** | MCP 协议 | JSON-RPC 2.0、stdio/SSE 传输 |
+| **orangecoding-tui** | 终端界面 | Markdown 渲染、主题系统、会话选择器 |
+| **orangecoding-cli** | 命令行 | 斜杠命令、RPC 模式、OAuth 认证、Zellij/Tmux 集成 |
+| **orangecoding-control-protocol** | 控制协议 | 浏览器/服务器/Worker 共用消息类型、会话/审批/事件模型 |
+| **orangecoding-control-server** | 控制服务 | HTTP API、WebSocket、本地令牌鉴权、流式事件分发 |
+| **orangecoding-worker** | Worker 运行时 | Agent 生命周期管理、审批桥接、事件转换 |
 
 ## 🤖 专业 Agent 系统（11 个）
 

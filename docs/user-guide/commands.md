@@ -385,7 +385,7 @@ UltraWork 全自动模式：启动完全自动化的开发流程，OrangeCoding 
 
 **说明：**
 - 交接时会传递当前上下文和工作状态
-- 通过 `chengcoding-mesh` 消息总线实现 Agent 间通信
+- 通过 `orangecoding-mesh` 消息总线实现 Agent 间通信
 - 如果不指定 Agent 名称，会提示选择
 
 ---
@@ -637,7 +637,7 @@ description: 运行指定模块的测试并分析结果
 使用方式：
 
 ```
-/test-module chengcoding-config
+/test-module orangecoding-config
 ```
 
 ### 占位符说明

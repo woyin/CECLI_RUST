@@ -282,315 +282,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
-name = "chengcoding-agent"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-ai",
- "chengcoding-core",
- "chengcoding-tools",
- "chrono",
- "dashmap",
- "futures",
- "mockall",
- "regex",
- "ring",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tokio-util",
- "toml",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-ai"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-core",
- "futures",
- "mockall",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-test",
- "tokio-util",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "chengcoding-audit"
-version = "0.1.0"
-dependencies = [
- "chengcoding-core",
- "chrono",
- "regex",
- "ring",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "chengcoding-agent",
- "chengcoding-ai",
- "chengcoding-audit",
- "chengcoding-config",
- "chengcoding-control-server",
- "chengcoding-core",
- "chengcoding-mcp",
- "chengcoding-mesh",
- "chengcoding-tools",
- "chengcoding-tui",
- "chengcoding-worker",
- "clap",
- "crossterm",
- "dashmap",
- "dirs",
- "ratatui",
- "reqwest",
- "ring",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-config"
-version = "0.1.0"
-dependencies = [
- "chengcoding-core",
- "config",
- "dirs",
- "ring",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "toml",
- "tracing",
- "walkdir",
-]
-
-[[package]]
-name = "chengcoding-control-protocol"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-control-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
- "chengcoding-control-protocol",
- "chengcoding-core",
- "chengcoding-worker",
- "chrono",
- "dashmap",
- "futures",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-core"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-invariant"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "chengcoding-mcp"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-core",
- "futures",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-mesh"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-core",
- "chrono",
- "dashmap",
- "parking_lot",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-session"
-version = "0.1.0"
-dependencies = [
- "chengcoding-core",
- "chrono",
- "parking_lot",
- "ring",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-tools"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-core",
- "chrono",
- "dashmap",
- "glob",
- "parking_lot",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "url",
- "uuid",
- "walkdir",
-]
-
-[[package]]
-name = "chengcoding-tui"
-version = "0.1.0"
-dependencies = [
- "chengcoding-core",
- "chrono",
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "unicode-width",
-]
-
-[[package]]
-name = "chengcoding-worker"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chengcoding-control-protocol",
- "chengcoding-core",
- "chrono",
- "dashmap",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "chengcoding-workspace-tests"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "axum",
- "chengcoding-agent",
- "chengcoding-control-protocol",
- "chengcoding-control-server",
- "chengcoding-core",
- "chengcoding-tools",
- "chengcoding-worker",
- "chrono",
- "serde_json",
- "tokio",
- "tower",
-]
-
-[[package]]
 name = "chrono"
 version = "0.4.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1684,6 +1375,315 @@ name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
+
+[[package]]
+name = "orangecoding-agent"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dashmap",
+ "futures",
+ "mockall",
+ "orangecoding-ai",
+ "orangecoding-core",
+ "orangecoding-tools",
+ "regex",
+ "ring",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tokio-util",
+ "toml",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-ai"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "mockall",
+ "orangecoding-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tokio-util",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "orangecoding-audit"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "orangecoding-core",
+ "regex",
+ "ring",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "clap",
+ "crossterm",
+ "dashmap",
+ "dirs",
+ "orangecoding-agent",
+ "orangecoding-ai",
+ "orangecoding-audit",
+ "orangecoding-config",
+ "orangecoding-control-server",
+ "orangecoding-core",
+ "orangecoding-mcp",
+ "orangecoding-mesh",
+ "orangecoding-tools",
+ "orangecoding-tui",
+ "orangecoding-worker",
+ "ratatui",
+ "reqwest",
+ "ring",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-config"
+version = "0.1.0"
+dependencies = [
+ "config",
+ "dirs",
+ "orangecoding-core",
+ "ring",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "toml",
+ "tracing",
+ "walkdir",
+]
+
+[[package]]
+name = "orangecoding-control-protocol"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-control-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-extra",
+ "chrono",
+ "dashmap",
+ "futures",
+ "orangecoding-control-protocol",
+ "orangecoding-core",
+ "orangecoding-worker",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-invariant"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "orangecoding-mcp"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "orangecoding-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-mesh"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dashmap",
+ "orangecoding-core",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-session"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "orangecoding-core",
+ "parking_lot",
+ "ring",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-tools"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dashmap",
+ "glob",
+ "orangecoding-core",
+ "parking_lot",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "url",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
+name = "orangecoding-tui"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "orangecoding-core",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "unicode-width",
+]
+
+[[package]]
+name = "orangecoding-worker"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "dashmap",
+ "orangecoding-control-protocol",
+ "orangecoding-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orangecoding-workspace-tests"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "chrono",
+ "orangecoding-agent",
+ "orangecoding-control-protocol",
+ "orangecoding-control-server",
+ "orangecoding-core",
+ "orangecoding-tools",
+ "orangecoding-worker",
+ "serde_json",
+ "tokio",
+ "tower",
+]
 
 [[package]]
 name = "ordered-multimap"
