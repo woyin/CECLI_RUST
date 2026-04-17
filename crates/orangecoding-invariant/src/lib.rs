@@ -1,4 +1,5 @@
 pub mod checker;
+pub mod checkpoint;
 pub mod evolution;
 pub mod gate;
 pub mod healing;
