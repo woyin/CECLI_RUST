@@ -112,6 +112,12 @@ pub mod memdir;
 /// MEMORY.md 索引文件
 pub mod memory_index;
 
+/// 项目记忆锚点（CLAUDE.md / AGENT.md 自动发现与合并）
+pub mod memory_anchor;
+
+/// 任务交接文档（Handoff Artifact）
+pub mod handoff;
+
 /// 验证 Agent 框架
 pub mod verification;
 
