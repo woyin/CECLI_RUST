@@ -36,7 +36,7 @@ impl BashTool {
     /// 创建新的 Bash 工具实例
     pub fn new() -> Self {
         Self {
-            default_timeout: 30,
+            default_timeout: 120,
             working_dir: None,
         }
     }
@@ -100,14 +100,18 @@ impl Tool for BashTool {
                 },
                 "timeout": {
                     "type": "number",
-                    "description": "超时时间（秒），默认 30，范围 1-3600",
+                    "description": "超时时间（秒），默认 120，范围 1-3600",
                     "minimum": 1,
                     "maximum": 3600,
-                    "default": 30
+                    "default": 120
                 },
                 "cwd": {
                     "type": "string",
                     "description": "命令执行的工作目录（可选）"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "对此次命令用途的简短说明（展示给用户）"
                 }
             },
             "required": ["command"]
@@ -405,7 +409,7 @@ mod tests {
     #[test]
     fn test_default_timeout() {
         let tool = BashTool::new();
-        assert_eq!(tool.default_timeout, 30);
+        assert_eq!(tool.default_timeout, 120);
     }
 
     /// 测试自定义超时设置

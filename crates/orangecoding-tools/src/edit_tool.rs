@@ -158,6 +158,10 @@ impl Tool for EditTool {
                 "new_text": {
                     "type": "string",
                     "description": "替换后的新文本"
+                },
+                "expected_sha256": {
+                    "type": "string",
+                    "description": "可选：期望的文件内容 SHA-256，用于检测并发修改"
                 }
             },
             "required": ["path", "old_text", "new_text"]
@@ -189,6 +193,21 @@ impl Tool for EditTool {
 
         // 读取内容并应用编辑
         let content = fs::read_to_string(path).await?;
+
+        // 可选的并发修改检测
+        if let Some(expected) = params.get("expected_sha256").and_then(|v| v.as_str()) {
+            use sha2::{Digest, Sha256};
+            let mut hasher = Sha256::new();
+            hasher.update(content.as_bytes());
+            let actual = format!("{:x}", hasher.finalize());
+            if !expected.eq_ignore_ascii_case(&actual) {
+                return Err(ToolError::ExecutionError(format!(
+                    "文件哈希不匹配，可能已被并发修改: 期望 {}, 实际 {}",
+                    expected, actual
+                )));
+            }
+        }
+
         let edit = EditOperation {
             path: path.to_string(),
             old_text: old_text.to_string(),

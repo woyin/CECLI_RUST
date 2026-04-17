@@ -13,12 +13,18 @@ pub mod batch_partition;
 pub mod browser_tool;
 pub mod calc_tool;
 pub mod edit_tool;
+pub mod exit_tool;
 pub mod fetch_tool;
 pub mod file_tools;
 pub mod find_tool;
+pub mod glob_tool;
 pub mod grep_tool;
+pub mod injection_defense;
 pub mod lsp_tool;
+pub mod multi_edit_tool;
+pub mod network_sandbox;
 pub mod notebook_tool;
+pub mod perm_rules;
 pub mod permissions;
 pub mod python_tool;
 pub mod registry;
@@ -45,13 +51,17 @@ pub use bash_tool::BashTool;
 pub use browser_tool::{BrowserAction, BrowserResult, BrowserTool};
 pub use calc_tool::CalcTool;
 pub use edit_tool::{EditOperation, EditTool};
+pub use exit_tool::{ExitTool, EXIT_MARKER};
 pub use fetch_tool::FetchTool;
 pub use file_tools::{
     DeleteFileTool, EditFileTool, ListDirectoryTool, ReadFileTool, SearchFilesTool, WriteFileTool,
 };
 pub use find_tool::FindTool;
+pub use glob_tool::GlobTool;
 pub use grep_tool::GrepTool;
+pub use injection_defense::{detect_injection, wrap_file_content, wrap_tool_result};
 pub use lsp_tool::{LspRequest, LspResponse, LspResultItem, LspTool};
+pub use multi_edit_tool::MultiEditTool;
 pub use notebook_tool::{
     CellOutput, CellType, Notebook, NotebookCell, NotebookMetadata, NotebookTool, OutputType,
 };

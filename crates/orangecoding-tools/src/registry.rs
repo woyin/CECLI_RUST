@@ -8,12 +8,15 @@ use crate::bash_tool::BashTool;
 use crate::browser_tool::BrowserTool;
 use crate::calc_tool::CalcTool;
 use crate::edit_tool::EditTool;
+use crate::exit_tool::ExitTool;
 use crate::file_tools::{
     DeleteFileTool, EditFileTool, ListDirectoryTool, ReadFileTool, SearchFilesTool, WriteFileTool,
 };
 use crate::find_tool::FindTool;
+use crate::glob_tool::GlobTool;
 use crate::grep_tool::GrepTool;
 use crate::lsp_tool::LspTool;
+use crate::multi_edit_tool::MultiEditTool;
 use crate::notebook_tool::NotebookTool;
 use crate::python_tool::PythonTool;
 use crate::security::{FileOperationGuard, PathValidator, SecurityPolicy};
@@ -217,6 +220,10 @@ pub fn create_default_registry(policy: SecurityPolicy) -> ToolRegistry {
         validator.clone(),
     )));
     registry.register(Arc::new(FileOperationGuard::new(
+        Arc::new(MultiEditTool),
+        validator.clone(),
+    )));
+    registry.register(Arc::new(FileOperationGuard::new(
         Arc::new(ListDirectoryTool),
         validator.clone(),
     )));
@@ -255,6 +262,8 @@ pub fn create_default_registry(policy: SecurityPolicy) -> ToolRegistry {
     registry.register(Arc::new(TaskTool));
     registry.register(Arc::new(PythonTool::new()));
     registry.register(Arc::new(BrowserTool::new()));
+    registry.register(Arc::new(GlobTool::new()));
+    registry.register(Arc::new(ExitTool::new()));
 
     info!("默认工具注册表已创建，共 {} 个工具", registry.len());
 
@@ -423,7 +432,7 @@ mod tests {
     fn test_create_default_registry() {
         let registry = create_default_registry(SecurityPolicy::default_policy());
 
-        assert_eq!(registry.len(), 18);
+        assert_eq!(registry.len(), 21);
 
         // 验证每个内置工具都存在
         let expected_tools = vec![
@@ -431,6 +440,7 @@ mod tests {
             "write_file",
             "edit_file",
             "edit",
+            "multi_edit",
             "list_directory",
             "search_files",
             "delete_file",
@@ -445,6 +455,8 @@ mod tests {
             "notebook",
             "browser",
             "ast_grep",
+            "glob",
+            "exit",
         ];
 
         for tool_name in expected_tools {
@@ -463,7 +475,7 @@ mod tests {
         let schemas = registry.get_schemas();
 
         let arr = schemas.as_array().unwrap();
-        assert_eq!(arr.len(), 18);
+        assert_eq!(arr.len(), 21);
 
         // 验证每个 Schema 都包含必要字段
         for schema in arr {
