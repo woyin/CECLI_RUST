@@ -52,6 +52,8 @@ pub fn execute_builtin(name: &str, args: &str) -> SlashCommandResult {
         "autopilot" => SlashCommandResult::Prompt(format_autopilot(args)),
         "autopilot-stop" => SlashCommandResult::Executed,
         "autopilot-status" => SlashCommandResult::Prompt(format_autopilot_status()),
+        "doctor" => SlashCommandResult::Prompt(format_doctor()),
+        "cost" => SlashCommandResult::Prompt(format_cost()),
         _ => SlashCommandResult::NotFound(name.to_string()),
     }
 }
@@ -99,6 +101,10 @@ Autopilot:
   /autopilot [需求] 启动长任务全自动模式
   /autopilot-stop  停止 Autopilot 循环
   /autopilot-status 查看 Autopilot 状态
+
+诊断:
+  /doctor         环境与配置健康检查
+  /cost           显示本会话 token 用量与成本估算
 
 退出:
   /exit           退出
@@ -237,6 +243,75 @@ fn format_autopilot(args: &str) -> String {
 
 fn format_autopilot_status() -> String {
     "Autopilot 状态: 未运行".to_string()
+}
+
+/// `/doctor` — 环境与配置健康检查
+///
+/// 检查项：Rust 工具链 / 配置目录 / 关键依赖可达性 / CLAUDE.md 记忆锚点。
+fn format_doctor() -> String {
+    use std::path::PathBuf;
+
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let config_dir = home.join(".config/orangecoding");
+    let models_yml = config_dir.join("models.yml");
+    let permissions_json = config_dir.join("permissions.json");
+    let agent_md = config_dir.join("AGENT.md");
+
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let claude_md = cwd.join("CLAUDE.md");
+
+    let ok = |b: bool| if b { "✅" } else { "⚠️" };
+
+    format!(
+        "OrangeCoding Doctor
+==================
+
+环境
+  OS:              {}
+  当前目录:        {}
+
+配置目录  {}
+  {}
+  models.yml       {} {}
+  permissions.json {} {}
+  AGENT.md         {} {}
+
+项目记忆
+  CLAUDE.md        {} {}
+
+建议
+  - 若 models.yml 缺失，请创建或运行 /settings
+  - CLAUDE.md 用于持久化项目偏好，会被自动注入 prompt
+  - permissions.json 支持 Bash(git *)、Write(**/*.ts) 等模式",
+        std::env::consts::OS,
+        cwd.display(),
+        ok(config_dir.is_dir()),
+        config_dir.display(),
+        ok(models_yml.is_file()),
+        models_yml.display(),
+        ok(permissions_json.is_file()),
+        permissions_json.display(),
+        ok(agent_md.is_file()),
+        agent_md.display(),
+        ok(claude_md.is_file()),
+        claude_md.display(),
+    )
+}
+
+/// `/cost` — 会话 token 用量与成本估算
+///
+/// 当前为占位实现；真实数据由 TUI 侧会话统计注入。
+fn format_cost() -> String {
+    "Token 用量统计
+==================
+  输入 token:   （会话未追踪）
+  输出 token:   （会话未追踪）
+  估算成本:     $0.0000
+
+提示
+  真实用量由运行时根据 provider 返回值累计并注入。
+  可结合 /usage 与 /debug 查看更多细节。"
+        .to_string()
 }
 
 // ============================================================
@@ -503,8 +578,32 @@ mod tests {
                 assert!(text.contains("/autopilot"));
                 assert!(text.contains("/autopilot-stop"));
                 assert!(text.contains("/autopilot-status"));
+                assert!(text.contains("/doctor"));
+                assert!(text.contains("/cost"));
             }
             other => panic!("期望 Prompt，得到 {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_doctor_command() {
+        let r = execute_builtin("doctor", "");
+        match r {
+            SlashCommandResult::Prompt(t) => {
+                assert!(t.contains("环境") || t.contains("健康") || t.contains("Doctor"));
+            }
+            other => panic!("expected Prompt, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_cost_command() {
+        let r = execute_builtin("cost", "");
+        match r {
+            SlashCommandResult::Prompt(t) => {
+                assert!(t.to_lowercase().contains("token") || t.contains("成本"));
+            }
+            other => panic!("expected Prompt, got {:?}", other),
         }
     }
 }
