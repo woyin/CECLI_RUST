@@ -1,14 +1,13 @@
-#[cfg(test)]
-compile_error!("harness types red state");
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReviewGatePolicy {
     Never,
     MajorPlanChange,
     Always,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HarnessConfig {
     pub checkpoint_interval: u32,
     pub max_segment_steps: u32,
@@ -29,7 +28,7 @@ impl Default for HarnessConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MissionContract {
     pub objective: String,
     pub success_criteria: Vec<String>,
@@ -48,7 +47,7 @@ impl MissionContract {
     ) -> Self {
         Self {
             objective,
-            success_criteria: Vec::new(),
+            success_criteria,
             accepted_plan_summary: String::new(),
             forbidden_detours: Vec::new(),
             review_gate_policy,
@@ -57,7 +56,7 @@ impl MissionContract {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StepOutcome {
     pub summary: String,
     pub touched_files: Vec<String>,
@@ -67,7 +66,7 @@ pub struct StepOutcome {
     pub proposed_plan_change: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HarnessAction {
     Continue,
     Replan { reason: String },

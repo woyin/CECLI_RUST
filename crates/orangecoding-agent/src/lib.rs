@@ -22,9 +22,6 @@
 //! let config = AgentLoopConfig::default();
 //! ```
 
-#[cfg(test)]
-compile_error!("harness red state");
-
 /// 代理统一配置模块
 pub mod agent_config;
 

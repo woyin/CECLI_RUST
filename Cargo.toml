@@ -62,10 +62,6 @@ path = "tests/invariants/approval_invariants.rs"
 name = "event_invariants"
 path = "tests/invariants/event_invariants.rs"
 
-[[test]]
-name = "harness_alignment"
-path = "tests/harness_alignment.rs"
-
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
