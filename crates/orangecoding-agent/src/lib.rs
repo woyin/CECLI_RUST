@@ -22,6 +22,9 @@
 //! let config = AgentLoopConfig::default();
 //! ```
 
+#[cfg(test)]
+compile_error!("harness red state");
+
 /// 代理统一配置模块
 pub mod agent_config;
 
@@ -117,6 +120,9 @@ pub mod memory_anchor;
 
 /// 任务交接文档（Handoff Artifact）
 pub mod handoff;
+
+/// Harness 对齐层模块
+pub mod harness;
 
 /// 验证 Agent 框架
 pub mod verification;
