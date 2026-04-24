@@ -1,6 +1,27 @@
 use crate::harness::types::{HarnessAction, MissionContract, StepOutcome};
 
-pub fn classify_outcome(_contract: &MissionContract, _outcome: &StepOutcome) -> HarnessAction {
+pub fn classify_outcome(contract: &MissionContract, outcome: &StepOutcome) -> HarnessAction {
+    if let Some(plan_change) = &outcome.proposed_plan_change {
+        if !plan_change.trim().is_empty() {
+            return HarnessAction::Replan {
+                reason: format!("检测到重大计划变更: {plan_change}"),
+            };
+        }
+    }
+
+    let detoured = contract.forbidden_detours.iter().any(|detour| {
+        !detour.is_empty()
+            && (outcome.summary.contains(detour)
+                || outcome.rationale.contains(detour)
+                || outcome.decisions.iter().any(|decision| decision.contains(detour)))
+    });
+
+    if detoured || outcome.summary.contains("无关") || outcome.rationale.contains("先解决 UI 再回来") {
+        return HarnessAction::Escalate {
+            reason: "检测到与主目标不一致的支线任务".into(),
+        };
+    }
+
     HarnessAction::Continue
 }
 
