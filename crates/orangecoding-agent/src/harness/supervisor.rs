@@ -39,28 +39,14 @@ mod tests {
     use crate::harness::HarnessAction;
 
     fn contract() -> MissionContract {
-        MissionContract::new(
+        let mut contract = MissionContract::new(
             "实现 Harness 对齐层".into(),
             vec!["保持主目标".into()],
             ReviewGatePolicy::MajorPlanChange,
             HarnessConfig::default(),
-        )
-    }
-
-    #[test]
-    fn 偏航时必须升级而不是继续() {
-        let mut supervisor = HarnessSupervisor::new(contract());
-        let outcome = StepOutcome {
-            summary: "顺手去修一个无关 UI bug".into(),
-            touched_files: vec!["crates/orangecoding-tui/src/app.rs".into()],
-            decisions: vec!["先解决 UI 再回来".into()],
-            rationale: "这个问题也挺重要".into(),
-            blockers: vec![],
-            proposed_plan_change: None,
-        };
-
-        let decision = supervisor.evaluate_checkpoint(&outcome);
-        assert!(matches!(decision, HarnessAction::Escalate { .. }));
+        );
+        contract.forbidden_detours = vec!["无关".into(), "先解决 UI 再回来".into()];
+        contract
     }
 
     #[test]

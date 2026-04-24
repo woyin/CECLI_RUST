@@ -13,10 +13,11 @@ pub fn classify_outcome(contract: &MissionContract, outcome: &StepOutcome) -> Ha
         !detour.is_empty()
             && (outcome.summary.contains(detour)
                 || outcome.rationale.contains(detour)
-                || outcome.decisions.iter().any(|decision| decision.contains(detour)))
+                || outcome.decisions.iter().any(|decision| decision.contains(detour))
+                || outcome.touched_files.iter().any(|file| file.contains(detour)))
     });
 
-    if detoured || outcome.summary.contains("无关") || outcome.rationale.contains("先解决 UI 再回来") {
+    if detoured {
         return HarnessAction::Escalate {
             reason: "检测到与主目标不一致的支线任务".into(),
         };
@@ -32,16 +33,18 @@ mod tests {
     use crate::harness::HarnessAction;
 
     fn contract() -> MissionContract {
-        MissionContract::new(
+        let mut contract = MissionContract::new(
             "实现 Harness 对齐层".into(),
             vec!["保持主目标".into()],
             ReviewGatePolicy::MajorPlanChange,
             HarnessConfig::default(),
-        )
+        );
+        contract.forbidden_detours = vec!["无关".into(), "先解决 UI 再回来".into()];
+        contract
     }
 
     #[test]
-    fn 偏航时必须升级而不是继续() {
+    fn 契约声明的偏航词必须升级() {
         let outcome = StepOutcome {
             summary: "顺手去修一个无关 UI bug".into(),
             touched_files: vec!["crates/orangecoding-tui/src/app.rs".into()],
@@ -53,6 +56,27 @@ mod tests {
 
         let decision = classify_outcome(&contract(), &outcome);
         assert!(matches!(decision, HarnessAction::Escalate { .. }));
+    }
+
+    #[test]
+    fn 仅有字面偏航词但未进入契约时不应升级() {
+        let contract = MissionContract::new(
+            "实现 Harness 对齐层".into(),
+            vec!["保持主目标".into()],
+            ReviewGatePolicy::MajorPlanChange,
+            HarnessConfig::default(),
+        );
+        let outcome = StepOutcome {
+            summary: "顺手去修一个无关 UI bug".into(),
+            touched_files: vec!["crates/orangecoding-tui/src/app.rs".into()],
+            decisions: vec!["先解决 UI 再回来".into()],
+            rationale: "这个问题也挺重要".into(),
+            blockers: vec![],
+            proposed_plan_change: None,
+        };
+
+        let decision = classify_outcome(&contract, &outcome);
+        assert!(matches!(decision, HarnessAction::Continue));
     }
 
     #[test]
