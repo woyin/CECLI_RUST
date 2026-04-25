@@ -1001,7 +1001,7 @@ fn handle_slash_command(app: &mut App, options: &mut ChatOptions, name: &str, ar
                 "可用命令:\n\
                  /model <名称>    - 切换 AI 模型\n\
                  /mode <模式>     - 切换模式：normal=Exec，plan=先规划，autopilot=长任务\n\
-                 /plan           - 切换 Plan 模式，规划后选择 一步到位 或 Exec\n\
+                 /plan           - 切换 Plan 模式；规划后选择 一步到位 或 Exec\n\
                  /think <深度>    - 切换思考深度 (off/light/medium/deep/maximum)\n\
                  /clear           - 清除对话\n\
                  /help            - 显示帮助\n\
@@ -1213,6 +1213,20 @@ mod tests {
     use orangecoding_ai::provider::FunctionCall;
     use orangecoding_ai::{MessageRole, ToolCall};
     use orangecoding_tui::app::InteractionMode;
+
+    #[test]
+    fn 测试帮助命令中的计划模式说明使用分号() {
+        let mut app = App::new("test-model");
+        let mut options = ChatOptions::default();
+
+        let should_clear = handle_slash_command(&mut app, &mut options, "help", "");
+
+        assert!(!should_clear);
+        let help_text = &app.messages.last().expect("应显示帮助消息").content;
+        assert!(help_text.contains("/plan"));
+        assert!(help_text.contains("切换 Plan 模式；规划后选择 一步到位 或 Exec"));
+        assert!(!help_text.contains("切换 Plan 模式，规划后选择"));
+    }
 
     #[test]
     fn 测试系统提示词只保留一个模式提示且不删除历史() {
