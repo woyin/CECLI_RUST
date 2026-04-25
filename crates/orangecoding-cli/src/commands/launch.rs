@@ -1000,7 +1000,8 @@ fn handle_slash_command(app: &mut App, options: &mut ChatOptions, name: &str, ar
                 Role::System,
                 "可用命令:\n\
                  /model <名称>    - 切换 AI 模型\n\
-                 /mode <模式>     - 切换交互模式 (normal/plan/autopilot/ultrawork)\n\
+                 /mode <模式>     - 切换模式：normal=Exec，plan=先规划，autopilot=长任务\n\
+                 /plan           - 切换 Plan 模式，规划后选择 一步到位 或 Exec\n\
                  /think <深度>    - 切换思考深度 (off/light/medium/deep/maximum)\n\
                  /clear           - 清除对话\n\
                  /help            - 显示帮助\n\

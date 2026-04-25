@@ -58,13 +58,13 @@ impl std::fmt::Display for AppMode {
 /// - 错误路径即主路径，高自主模式需要更强的错误恢复能力
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InteractionMode {
-    /// 普通模式 - 每次操作需用户确认，最安全
+    /// Exec 模式 - 严格执行，仅决策分叉时询问
     Normal,
-    /// 计划模式 - AI 先制定计划再执行，用户审批计划
+    /// Plan 模式 - 先规划，确认后选择执行策略
     Plan,
-    /// 自动驾驶模式 - AI 自动执行任务，仅在关键节点暂停
+    /// 长任务模式 - 全程自动执行并静默自纠
     Autopilot,
-    /// 极限工作模式 - 最高自主权，AI 全程自动化执行
+    /// 极限模式 - 暂保持现状
     UltraWork,
 }
 
@@ -102,10 +102,10 @@ impl InteractionMode {
     /// 获取模式的中文说明
     pub fn description(&self) -> &'static str {
         match self {
-            InteractionMode::Normal => "普通模式 - 每步确认",
-            InteractionMode::Plan => "计划模式 - 先规划后执行",
-            InteractionMode::Autopilot => "自动驾驶 - 自动执行任务",
-            InteractionMode::UltraWork => "极限模式 - 全程自动化",
+            InteractionMode::Normal => "Exec 模式 - 严格执行，决策分叉才询问",
+            InteractionMode::Plan => "Plan 模式 - 先规划，确认后选择执行策略",
+            InteractionMode::Autopilot => "长任务模式 - 全程自动执行并静默自纠",
+            InteractionMode::UltraWork => "极限模式 - 暂保持现状",
         }
     }
 
@@ -2061,6 +2061,16 @@ mod tests {
         assert_eq!(InteractionMode::Autopilot.label(), "Autopilot");
         assert_eq!(InteractionMode::UltraWork.label(), "UltraWork");
         assert_eq!(InteractionMode::all().len(), 4);
+    }
+
+    #[test]
+    fn 测试交互模式描述反映新语义() {
+        assert!(InteractionMode::Normal.description().contains("Exec"));
+        assert!(InteractionMode::Plan.description().contains("选择执行策略"));
+        assert!(InteractionMode::Autopilot.description().contains("长任务"));
+        assert!(InteractionMode::UltraWork
+            .description()
+            .contains("保持现状"));
     }
 
     #[test]
