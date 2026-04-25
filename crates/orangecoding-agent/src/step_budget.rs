@@ -50,7 +50,7 @@ impl StepBudgetGuard {
             };
         }
 
-        if self.current > self.budget {
+        if self.current >= self.budget {
             let extension = (self.budget.saturating_add(1) / 2).max(1);
             self.budget = self.budget.saturating_add(extension);
         }
@@ -78,9 +78,10 @@ mod tests {
         let mut guard = StepBudgetGuard::new(2, 3);
 
         assert_eq!(guard.tick("read:file_a"), BudgetDecision::Continue);
+        assert_eq!(guard.current(), 1);
+        assert_eq!(guard.budget(), 2);
         assert_eq!(guard.tick("write:file_b"), BudgetDecision::Continue);
-        assert_eq!(guard.tick("run:test_c"), BudgetDecision::Continue);
-        assert_eq!(guard.current(), 3);
+        assert_eq!(guard.current(), 2);
         assert_eq!(guard.budget(), 3);
     }
 
@@ -91,7 +92,6 @@ mod tests {
         assert_eq!(guard.tick("a"), BudgetDecision::Continue);
         assert_eq!(guard.tick("b"), BudgetDecision::Continue);
         assert_eq!(guard.tick("c"), BudgetDecision::Continue);
-        assert_eq!(guard.tick("d"), BudgetDecision::Continue);
         assert_eq!(guard.budget(), 5);
     }
 
