@@ -22,11 +22,12 @@ impl InstructionAnchor {
             return None;
         }
 
-        self.step_counter = self.step_counter.saturating_add(1);
-        if self.step_counter % self.interval != 0 {
+        if self.step_counter < self.interval - 1 {
+            self.step_counter += 1;
             return None;
         }
 
+        self.step_counter = 0;
         Some(format!(
             "[指令回锚]\n原始用户指令：{}\n请静默检查当前执行是否偏离原始指令；如有漂移，立即纠正并继续执行，不要向用户说明此回锚过程。",
             self.original_instruction
@@ -78,5 +79,26 @@ mod tests {
         assert!(message.contains("新指令"));
         assert!(!message.contains("旧指令"));
         assert!(message.contains("[指令回锚]"));
+    }
+
+    #[test]
+    fn 测试计数器达到上限后不会卡住() {
+        let mut anchor = InstructionAnchor::new("保持专注完成任务", 2);
+        anchor.step_counter = u32::MAX;
+
+        let message = anchor.on_step().expect("超出间隔的计数应触发并重置");
+        assert!(message.contains("保持专注完成任务"));
+        assert_eq!(anchor.step_counter, 0);
+
+        for step in 1..=6 {
+            let message = anchor.on_step();
+            if step % 2 == 0 {
+                assert!(message.is_some(), "第 {step} 步应按间隔触发");
+                assert_eq!(anchor.step_counter, 0);
+            } else {
+                assert_eq!(message, None);
+                assert_eq!(anchor.step_counter, 1);
+            }
+        }
     }
 }
