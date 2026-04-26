@@ -76,7 +76,8 @@ OrangeCoding 斜杠命令帮助
 模型与设置:
   /model          模型选择器
   /settings       设置菜单
-  /plan           切换计划模式
+  /mode <模式>    切换模式：normal=Exec，plan=先规划，autopilot=长任务
+  /plan           切换 Plan 模式；规划后选择 一步到位 或 Exec
 
 上下文管理:
   /compact [focus] 手动压缩上下文
@@ -329,6 +330,11 @@ mod tests {
             SlashCommandResult::Prompt(text) => {
                 assert!(text.contains("斜杠命令帮助"));
                 assert!(text.contains("/new"));
+                assert!(text.contains("normal=Exec"));
+                assert!(text.contains("plan=先规划"));
+                assert!(text.contains("autopilot=长任务"));
+                assert!(text.contains("一步到位"));
+                assert!(text.contains("Exec"));
                 assert!(text.contains("/exit"));
             }
             other => panic!("期望 Prompt，得到 {:?}", other),

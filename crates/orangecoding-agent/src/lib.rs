@@ -43,6 +43,9 @@ pub mod context;
 /// 工具执行器模块
 pub mod executor;
 
+/// 模式化执行系统提示词模块
+pub mod execution_prompt;
+
 /// Hashline 编辑模块
 pub mod hashline;
 
@@ -51,6 +54,9 @@ pub mod hooks;
 
 /// 意图门控模块（请求意图分类）
 pub mod intent_gate;
+
+/// 指令回锚模块
+pub mod instruction_anchor;
 
 /// 技能系统模块
 pub mod skills;
@@ -64,8 +70,14 @@ pub mod ttsr;
 /// 记忆系统模块
 pub mod memory;
 
+/// 运行时模型路由与执行配置模块
+pub mod model_router;
+
 /// Token 预算状态机模块
 pub mod token_budget;
+
+/// 步骤预算守卫模块
+pub mod step_budget;
 
 /// 任务系统模块 — 任务 ID、状态机、注册表
 pub mod task_system;
