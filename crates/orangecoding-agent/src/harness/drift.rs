@@ -13,8 +13,14 @@ pub fn classify_outcome(contract: &MissionContract, outcome: &StepOutcome) -> Ha
         !detour.is_empty()
             && (outcome.summary.contains(detour)
                 || outcome.rationale.contains(detour)
-                || outcome.decisions.iter().any(|decision| decision.contains(detour))
-                || outcome.touched_files.iter().any(|file| file.contains(detour)))
+                || outcome
+                    .decisions
+                    .iter()
+                    .any(|decision| decision.contains(detour))
+                || outcome
+                    .touched_files
+                    .iter()
+                    .any(|file| file.contains(detour)))
     });
 
     if detoured {

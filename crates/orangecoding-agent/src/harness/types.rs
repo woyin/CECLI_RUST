@@ -91,7 +91,10 @@ mod tests {
 
         assert_eq!(roundtrip.objective, "实现 Harness 对齐层");
         assert_eq!(roundtrip.success_criteria.len(), 2);
-        assert_eq!(roundtrip.review_gate_policy, ReviewGatePolicy::MajorPlanChange);
+        assert_eq!(
+            roundtrip.review_gate_policy,
+            ReviewGatePolicy::MajorPlanChange
+        );
     }
 
     #[test]
