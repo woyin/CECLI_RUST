@@ -68,7 +68,7 @@ impl Default for AiConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct AgentConfig {
-    /// 智能体最大迭代次数，防止无限循环
+    /// 智能体初始迭代软预算，耗尽后由循环守卫扩展
     pub max_iterations: u32,
 
     /// 单次操作超时时间（秒）
