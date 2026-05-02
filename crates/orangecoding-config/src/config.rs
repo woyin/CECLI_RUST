@@ -161,13 +161,13 @@ impl Default for TuiConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct AutopilotConfig {
-    /// 最大循环轮次（默认 10），超过后进入 Failed 状态
+    /// 初始循环软预算（默认 10），耗尽后自动扩展
     pub max_cycles: u32,
 
     /// 严格验证模式：所有验收标准必须通过 + 测试全部通过
     pub verify_strict: bool,
 
-    /// 每个任务内部的 AI 最大迭代次数
+    /// 每个任务内部的 AI 初始迭代软预算
     pub task_max_iterations: u32,
 
     /// 每个任务超时秒数

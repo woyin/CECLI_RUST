@@ -40,7 +40,7 @@ pub enum AutopilotPhase {
     Verifying,
     /// 全部完成
     Done,
-    /// 不可恢复的错误或超过最大循环次数
+    /// 不可恢复的错误
     Failed,
 }
 
@@ -64,11 +64,11 @@ impl AutopilotPhase {
 /// Autopilot 模式配置
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AutopilotConfig {
-    /// 最大循环轮次（默认 10）
+    /// 初始循环软预算（默认 10，耗尽后自动扩展）
     pub max_cycles: u32,
     /// 严格验证模式：所有验收标准必须通过 + 测试全部通过
     pub verify_strict: bool,
-    /// 每个任务内部的 AI 最大迭代次数
+    /// 每个任务内部的 AI 初始迭代软预算
     pub task_max_iterations: u32,
     /// 每个任务超时秒数
     pub task_timeout_secs: u64,
@@ -244,13 +244,11 @@ impl AutopilotMode {
                     if report.passed {
                         Some(AutopilotPhase::Done)
                     } else {
-                        // 验证失败，检查循环次数
                         if self.current_cycle >= self.config.max_cycles {
-                            Some(AutopilotPhase::Failed)
-                        } else {
-                            self.current_cycle += 1;
-                            Some(AutopilotPhase::Planning)
+                            self.extend_cycle_budget();
                         }
+                        self.current_cycle += 1;
+                        Some(AutopilotPhase::Planning)
                     }
                 } else {
                     Some(AutopilotPhase::Done)
@@ -307,6 +305,11 @@ impl AutopilotMode {
 
     pub fn set_verification(&mut self, report: VerificationReport) {
         self.last_verification = Some(report);
+    }
+
+    fn extend_cycle_budget(&mut self) {
+        let extension = (self.config.max_cycles.saturating_add(1) / 2).max(1);
+        self.config.max_cycles = self.config.max_cycles.saturating_add(extension);
     }
 
     /// 生成状态摘要（用于事件上报）
@@ -427,7 +430,7 @@ mod tests {
     }
 
     #[test]
-    fn 超过最大循环次数则失败() {
+    fn 超过初始循环预算会扩展并继续() {
         let mut config = AutopilotConfig::default();
         config.max_cycles = 2;
         let mut mode = AutopilotMode::with_config("test".into(), config);
@@ -458,11 +461,8 @@ mod tests {
             failure_summary: Some("fail again".into()),
             suggestions: vec![],
         });
-        mode.advance(); // → Planning (replan, cycle=2) → exceeds max_cycles=2
+        mode.advance(); // → Planning (replan, cycle=2)
 
-        // cycle 2 == max_cycles 2, should go to Planning and then...
-        // Actually the check is current_cycle >= max_cycles
-        // After cycle=2 replan, next verify fail will trigger Failed
         assert_eq!(mode.current_phase(), AutopilotPhase::Planning);
         mode.advance(); // → Executing
         mode.advance(); // → Verifying
@@ -474,8 +474,41 @@ mod tests {
             failure_summary: Some("still failing".into()),
             suggestions: vec![],
         });
-        mode.advance(); // → Failed (cycle 2 >= max_cycles 2)
-        assert!(mode.is_failed());
+        mode.advance(); // → Planning after extending cycle budget
+        assert!(mode.is_active());
+        assert_eq!(mode.current_phase(), AutopilotPhase::Planning);
+        assert_eq!(mode.current_cycle(), 3);
+        assert!(mode.config().max_cycles > 2);
+    }
+
+    #[test]
+    fn 循环预算耗尽时扩展而不是失败() {
+        let mut config = AutopilotConfig::default();
+        config.max_cycles = 1;
+        let mut mode = AutopilotMode::with_config("test".into(), config);
+        mode.activate();
+
+        mode.advance(); // → Planning
+        mode.advance(); // → Executing
+        mode.advance(); // → Verifying
+        mode.set_verification(VerificationReport {
+            cycle: 0,
+            test_results: TestRunResult::default(),
+            criteria_results: vec![],
+            passed: false,
+            failure_summary: Some("需要继续重试".into()),
+            suggestions: vec![],
+        });
+
+        mode.advance(); // → Planning, cycle=1
+        mode.advance(); // → Executing
+        mode.advance(); // → Verifying
+        mode.advance(); // budget exhausted, should extend and replan
+
+        assert!(mode.is_active());
+        assert_eq!(mode.current_phase(), AutopilotPhase::Planning);
+        assert_eq!(mode.current_cycle(), 2);
+        assert!(mode.config().max_cycles > 1);
     }
 
     #[test]
