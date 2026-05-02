@@ -505,6 +505,26 @@ fn runtime_step_guard(runtime_config: &OrangeRuntimeConfig) -> StepBudgetGuard {
     )
 }
 
+/// 确保当前 AI 调用轮次不被固定迭代预算硬截断。
+fn extend_iteration_budget_if_needed(iteration: u32, current_limit: &mut u32) -> bool {
+    if *current_limit == 0 {
+        *current_limit = 1;
+    }
+
+    if iteration >= *current_limit {
+        let previous_limit = *current_limit;
+        let extension = (current_limit.saturating_add(1) / 2).max(1);
+        *current_limit = current_limit.saturating_add(extension);
+        info!(
+            "迭代软预算已从 {} 扩展到 {}，继续执行",
+            previous_limit, *current_limit
+        );
+        return true;
+    }
+
+    false
+}
+
 // ============================================================
 // 单次任务模式
 // ============================================================
@@ -560,9 +580,11 @@ async fn run_single_shot(
         .max_tokens(config.ai.max_tokens);
 
     // 智能体循环：允许多轮工具调用
-    let max_iterations = config.agent.max_iterations;
-    for iteration in 0..max_iterations {
-        info!("智能体迭代 #{}", iteration + 1);
+    let mut iteration_limit = config.agent.max_iterations;
+    let mut iteration = 0_u32;
+    loop {
+        extend_iteration_budget_if_needed(iteration, &mut iteration_limit);
+        info!("智能体迭代 #{}/{}", iteration + 1, iteration_limit);
 
         if let Some(anchor_message) = anchor.on_step() {
             replace_latest_anchor_message(&mut messages, anchor_message);
@@ -616,6 +638,7 @@ async fn run_single_shot(
                 messages.push(ChatMessage::tool_result(&tool_call.id, &tool_result));
             }
 
+            iteration = iteration.saturating_add(1);
             continue;
         }
 
@@ -632,12 +655,6 @@ async fn run_single_shot(
 
         return Ok(());
     }
-
-    // 超过最大迭代次数
-    anyhow::bail!(
-        "智能体已达到最大迭代次数 ({})，任务可能过于复杂",
-        max_iterations,
-    );
 }
 
 // ============================================================
@@ -790,8 +807,11 @@ async fn run_tui_mode(
                         let mut budget_guard = runtime_step_guard(&runtime_config);
 
                         // 智能体循环：支持多轮工具调用
-                        let max_iterations = config.agent.max_iterations;
-                        for iteration in 0..max_iterations {
+                        let mut iteration_limit = config.agent.max_iterations;
+                        let mut iteration = 0_u32;
+                        loop {
+                            extend_iteration_budget_if_needed(iteration, &mut iteration_limit);
+
                             if let Some(anchor_message) = anchor.on_step() {
                                 replace_latest_anchor_message(&mut messages, anchor_message);
                             }
@@ -868,11 +888,12 @@ async fn run_tui_mode(
                                 app.status.status_text = format!(
                                     "执行工具中... (迭代 {}/{})",
                                     iteration + 1,
-                                    max_iterations
+                                    iteration_limit
                                 );
                                 let _ = terminal.draw(|frame| {
                                     MainLayout::render(frame, &app);
                                 });
+                                iteration = iteration.saturating_add(1);
                                 continue;
                             }
 
@@ -1126,8 +1147,11 @@ async fn run_text_loop(
         let mut budget_guard = runtime_step_guard(&runtime_config);
 
         // 智能体循环处理（支持多轮工具调用）
-        let max_iterations = config.agent.max_iterations;
-        for iteration in 0..max_iterations {
+        let mut iteration_limit = config.agent.max_iterations;
+        let mut iteration = 0_u32;
+        loop {
+            extend_iteration_budget_if_needed(iteration, &mut iteration_limit);
+
             if let Some(anchor_message) = anchor.on_step() {
                 replace_latest_anchor_message(&mut messages, anchor_message);
             }
@@ -1188,6 +1212,7 @@ async fn run_text_loop(
                     messages.push(ChatMessage::tool_result(&tool_call.id, &result));
                 }
 
+                iteration = iteration.saturating_add(1);
                 continue;
             }
 
@@ -1388,6 +1413,18 @@ mod tests {
             mode_to_execution_mode(InteractionMode::UltraWork),
             ExecutionMode::UltraWork
         );
+    }
+
+    #[test]
+    fn 测试迭代预算到达上限后扩展而不是硬停止() {
+        let mut limit = 1;
+
+        assert!(!extend_iteration_budget_if_needed(0, &mut limit));
+        assert_eq!(limit, 1);
+        assert!(extend_iteration_budget_if_needed(1, &mut limit));
+        assert_eq!(limit, 2);
+        assert!(extend_iteration_budget_if_needed(2, &mut limit));
+        assert_eq!(limit, 3);
     }
 
     fn tool_call(id: &str, name: &str, arguments: &str) -> ToolCall {

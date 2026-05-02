@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::Result;
 use clap::Args;
@@ -69,11 +70,7 @@ impl AgentExecutor for LocalAgentExecutor {
         let registry = Arc::new(create_default_registry(policy));
         let tool_executor = ToolExecutor::new(registry);
 
-        let loop_config = AgentLoopConfig {
-            max_iterations: self.config.agent.max_iterations,
-            auto_approve_tools: false,
-            ..Default::default()
-        };
+        let loop_config = build_agent_loop_config(&self.config);
 
         let mut agent_loop = AgentLoop::new(
             agent_id,
@@ -194,4 +191,30 @@ fn setup_provider(config: &OrangeConfig) -> Result<Box<dyn AiProvider>> {
 
     ProviderFactory::create_provider(&provider_name, provider_config)
         .map_err(|e| anyhow::anyhow!("创建 AI 提供商 '{}' 失败: {}", provider_name, e))
+}
+
+fn build_agent_loop_config(config: &OrangeConfig) -> AgentLoopConfig {
+    AgentLoopConfig {
+        max_iterations: config.agent.max_iterations,
+        timeout: Duration::from_secs(config.agent.timeout_secs),
+        auto_approve_tools: false,
+        ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 测试_agent_loop_config_使用用户配置的软预算和超时() {
+        let mut config = OrangeConfig::default();
+        config.agent.max_iterations = 123;
+        config.agent.timeout_secs = 7_200;
+
+        let loop_config = build_agent_loop_config(&config);
+
+        assert_eq!(loop_config.max_iterations, 123);
+        assert_eq!(loop_config.timeout, Duration::from_secs(7_200));
+    }
 }

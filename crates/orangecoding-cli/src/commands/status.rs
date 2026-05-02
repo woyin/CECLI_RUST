@@ -173,7 +173,7 @@ fn print_config_section(config: &OrangeConfig) {
 
     // 智能体配置
     println!("  智能体:");
-    println!("    最大迭代次数:   {}", config.agent.max_iterations);
+    println!("    初始迭代软预算: {}", config.agent.max_iterations);
     println!("    超时时间:       {} 秒", config.agent.timeout_secs);
     println!(
         "    自动批准工具:   {}",

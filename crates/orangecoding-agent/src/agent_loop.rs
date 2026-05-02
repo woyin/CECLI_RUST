@@ -5,7 +5,7 @@
 //! 2. 解析 AI 返回的工具调用请求
 //! 3. 通过 `ToolExecutor` 执行工具并收集结果
 //! 4. 将工具结果追加到对话中，继续下一轮交互
-//! 5. 重复以上步骤，直到 AI 给出最终文本回复或达到最大迭代次数
+//! 5. 重复以上步骤，直到 AI 给出最终文本回复、取消、超时或循环守卫硬停止
 //!
 //! 支持通过 `CancellationToken` 取消运行，并通过 `mpsc` 通道发送事件通知。
 
@@ -33,7 +33,7 @@ use crate::step_budget::{BudgetDecision, StepBudgetGuard};
 // 代理循环配置
 // ---------------------------------------------------------------------------
 
-/// 代理循环的默认最大迭代次数
+/// 代理循环的默认初始迭代软预算
 const DEFAULT_MAX_ITERATIONS: u32 = 20;
 /// 代理循环的默认超时时间（5 分钟）
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(300);
@@ -48,10 +48,10 @@ const INSTRUCTION_ANCHOR_PREFIX: &str = "[指令回锚]";
 
 /// 代理循环配置
 ///
-/// 控制代理事件循环的行为参数，包括最大迭代次数、超时时间和工具自动审批。
+/// 控制代理事件循环的行为参数，包括初始迭代软预算、超时时间和工具自动审批。
 #[derive(Debug, Clone)]
 pub struct AgentLoopConfig {
-    /// 最大迭代次数（每次 AI 调用计为一次迭代）
+    /// 初始迭代软预算（每次 AI 调用计为一次迭代，耗尽后自动扩展）
     pub max_iterations: u32,
     /// 整个循环的超时时间
     pub timeout: Duration,
@@ -68,7 +68,7 @@ pub struct AgentLoopConfig {
 impl Default for AgentLoopConfig {
     /// 创建默认配置
     ///
-    /// - 最大迭代次数：20
+    /// - 初始迭代软预算：20
     /// - 超时时间：300 秒（5 分钟）
     /// - 自动批准工具：否
     fn default() -> Self {
@@ -118,7 +118,7 @@ pub struct AgentLoopResult {
 /// 2. 调用 `run()` 启动事件循环
 /// 3. 循环自动在以下条件下终止：
 ///    - AI 返回不包含工具调用的最终回复
-///    - 达到最大迭代次数
+///    - 触发循环守卫硬停止
 ///    - 超时
 ///    - 收到取消信号
 pub struct AgentLoop {
@@ -213,8 +213,11 @@ impl AgentLoop {
             self.config.loop_detection_threshold as usize,
         );
 
+        let mut iteration = 0_u32;
+        let mut iteration_limit = self.config.max_iterations.max(1);
+
         // 主事件循环
-        for iteration in 0..self.config.max_iterations {
+        loop {
             // 检查取消信号
             if cancel_token.is_cancelled() {
                 warn!("代理 {} 收到取消信号，退出循环", self.id);
@@ -237,11 +240,22 @@ impl AgentLoop {
                 break;
             }
 
+            if iteration >= iteration_limit {
+                let previous_limit = iteration_limit;
+                let extension = (iteration_limit.saturating_add(1) / 2).max(1);
+                iteration_limit = iteration_limit.saturating_add(extension);
+                info!(
+                    "代理 {} 迭代软预算已从 {} 扩展到 {}，继续执行",
+                    self.id, previous_limit, iteration_limit
+                );
+            }
+
+            let display_iteration = iteration.saturating_add(1);
+            iteration = iteration.saturating_add(1);
+
             info!(
                 "代理 {} 第 {}/{} 次迭代",
-                self.id,
-                iteration + 1,
-                self.config.max_iterations
+                self.id, display_iteration, iteration_limit
             );
 
             if let Some(anchor_message) = instruction_anchor.on_step() {
@@ -1202,6 +1216,36 @@ mod tests {
                 .count()
                 <= 1
         }));
+    }
+
+    /// 测试最大迭代次数只是软预算，不会在长任务仍在推进时截断执行
+    #[tokio::test]
+    async fn 测试达到最大迭代软预算后继续执行到完成() {
+        let provider = Arc::new(RecordingToolCallProvider::new());
+        let executor = create_test_executor();
+        let mut context = AgentContext::new(SessionId::new(), PathBuf::from("."));
+        context.add_user_message("执行需要多轮工具调用的长任务");
+
+        let config = AgentLoopConfig {
+            max_iterations: 1,
+            step_budget_initial: 10,
+            loop_detection_threshold: 3,
+            ..Default::default()
+        };
+
+        let mut agent_loop = AgentLoop::new(AgentId::new(), provider, executor, context, config);
+
+        let cancel_token = CancellationToken::new();
+        let (tx, _rx) = mpsc::channel(100);
+        let options = ChatOptions::with_model("mock-model");
+
+        let result = agent_loop.run(&options, cancel_token, tx).await.unwrap();
+
+        assert_eq!(result.tool_calls_made, 2);
+        assert!(result
+            .messages
+            .iter()
+            .any(|message| message.content.as_deref() == Some("已完成")));
     }
 
     /// 测试同一批次内的重复工具调用不会触发跨迭代循环硬停止
