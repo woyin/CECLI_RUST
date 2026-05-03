@@ -21,6 +21,7 @@
 //! ```
 
 use crate::harness::{HarnessAction, MissionContract};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 // ============================================================
@@ -376,6 +377,104 @@ impl GoalMode {
     /// 检查是否已完成（阶段为 Done）。
     pub fn is_complete(&self) -> bool {
         self.phase == GoalPhase::Done
+    }
+}
+
+// ============================================================
+// GoalState 持久化
+// ============================================================
+
+/// Goal 状态持久化文件路径
+pub const GOAL_FILE_PATH: &str = ".sisyphus/goal.json";
+
+/// Goal 持久化状态
+///
+/// 保存完整的 Goal 运行状态，支持跨会话恢复执行。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoalState {
+    pub id: String,
+    pub requirement: String,
+    pub plan: GoalPlan,
+    pub config: GoalConfig,
+    pub mission_contract: Option<MissionContract>,
+    pub current_phase: GoalPhase,
+    pub current_task_index: usize,
+    pub current_cycle: u32,
+    pub session_ids: Vec<String>,
+    pub started_at: String,
+    pub last_checkpoint: Option<String>,
+    pub last_verification: Option<VerificationReport>,
+}
+
+impl GoalState {
+    /// 创建新的 GoalState。
+    ///
+    /// ID 格式: `goal-{timestamp_hex_12chars}{random_hex_8chars}`
+    /// started_at 使用 RFC 3339 时间戳。
+    pub fn new(requirement: String, config: GoalConfig, plan: GoalPlan) -> Self {
+        let now = Utc::now();
+        let timestamp_hex = format!("{:012x}", now.timestamp());
+        let random_hex = format!("{:08x}", now.timestamp_subsec_nanos());
+        let id = format!("goal-{}{}", timestamp_hex, random_hex);
+
+        Self {
+            id,
+            requirement,
+            plan,
+            config,
+            mission_contract: None,
+            current_phase: GoalPhase::Planning,
+            current_task_index: 0,
+            current_cycle: 0,
+            session_ids: Vec::new(),
+            started_at: now.to_rfc3339(),
+            last_checkpoint: None,
+            last_verification: None,
+        }
+    }
+
+    /// 序列化为 JSON 字符串。
+    pub fn to_json(&self) -> Result<String, String> {
+        serde_json::to_string_pretty(self).map_err(|e| format!("序列化失败: {}", e))
+    }
+
+    /// 从 JSON 字符串反序列化。
+    pub fn from_json(json: &str) -> Result<Self, String> {
+        serde_json::from_str(json).map_err(|e| format!("反序列化失败: {}", e))
+    }
+
+    /// 生成恢复执行的提示文本。
+    pub fn resume_prompt(&self) -> String {
+        let done = self
+            .plan
+            .tasks
+            .iter()
+            .filter(|t| t.status == GoalTaskStatus::Completed)
+            .count();
+        let total = self.plan.tasks.len();
+
+        let mut prompt = format!(
+            "恢复执行目标「{}」。\n当前进度: {}/{}（第 {} 轮）\n阶段: {}",
+            self.requirement,
+            done,
+            total,
+            self.current_cycle + 1,
+            self.current_phase.display_name()
+        );
+
+        if let Some(ref checkpoint) = self.last_checkpoint {
+            prompt.push_str(&format!("\n上次检查点: {}", checkpoint));
+        }
+
+        if let Some(ref verification) = self.last_verification {
+            if !verification.passed {
+                if let Some(ref summary) = verification.failure_summary {
+                    prompt.push_str(&format!("\n上次验证失败: {}", summary));
+                }
+            }
+        }
+
+        prompt
     }
 }
 
@@ -745,5 +844,95 @@ mod tests {
 
         // Done 之后无法推进
         assert!(!mode.advance());
+    }
+
+    // ===========================================================
+    // GoalState 持久化测试
+    // ===========================================================
+
+    #[test]
+    fn goal_state_序列化往返() {
+        let config = GoalConfig::default();
+        let plan = GoalPlan {
+            requirement: "实现认证".into(),
+            tasks: vec![GoalTask {
+                id: "T1".into(),
+                title: "创建模型".into(),
+                description: "定义 User".into(),
+                target_files: vec!["src/user.rs".into()],
+                acceptance_criteria: vec!["编译通过".into()],
+                depends_on: vec![],
+                status: GoalTaskStatus::Pending,
+            }],
+            acceptance_criteria: vec!["测试通过".into()],
+            cycle: 1,
+            forbidden_detours: vec![],
+            context: "初始".into(),
+        };
+        let state = GoalState::new("实现认证".into(), config, plan);
+
+        let json = state.to_json().unwrap();
+        let roundtrip = GoalState::from_json(&json).unwrap();
+
+        assert_eq!(roundtrip.requirement, "实现认证");
+        assert_eq!(roundtrip.plan.tasks.len(), 1);
+        assert_eq!(roundtrip.current_phase, GoalPhase::Planning);
+    }
+
+    #[test]
+    fn goal_state_恢复提示包含关键信息() {
+        let config = GoalConfig::default();
+        let plan = GoalPlan {
+            requirement: "重构缓存层".into(),
+            tasks: vec![GoalTask {
+                id: "T1".into(),
+                title: "完成".into(),
+                description: "已完成".into(),
+                target_files: vec![],
+                acceptance_criteria: vec![],
+                depends_on: vec![],
+                status: GoalTaskStatus::Completed,
+            }],
+            acceptance_criteria: vec![],
+            cycle: 2,
+            forbidden_detours: vec![],
+            context: "replan".into(),
+        };
+        let mut state = GoalState::new("重构缓存层".into(), config, plan);
+        state.current_cycle = 2;
+        state.current_phase = GoalPhase::Executing;
+        state.last_checkpoint = Some("完成了缓存接口定义".into());
+
+        let prompt = state.resume_prompt();
+        assert!(prompt.contains("重构缓存层"));
+        assert!(prompt.contains("1/1"));
+        assert!(prompt.contains("执行任务"));
+        assert!(prompt.contains("完成了缓存接口定义"));
+    }
+
+    #[test]
+    fn goal_state_恢复提示包含验证失败信息() {
+        let config = GoalConfig::default();
+        let plan = GoalPlan {
+            requirement: "测试".into(),
+            tasks: vec![],
+            acceptance_criteria: vec![],
+            cycle: 1,
+            forbidden_detours: vec![],
+            context: String::new(),
+        };
+        let mut state = GoalState::new("测试".into(), config, plan);
+        state.last_verification = Some(VerificationReport {
+            cycle: 1,
+            command_results: vec![],
+            criteria_results: vec![],
+            passed: false,
+            failure_summary: Some("2 tests failed".into()),
+            suggestions: vec![],
+        });
+
+        let prompt = state.resume_prompt();
+        assert!(prompt.contains("上次验证失败"));
+        assert!(prompt.contains("2 tests failed"));
     }
 }
