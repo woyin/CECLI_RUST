@@ -5,8 +5,8 @@ pub enum ExecutionMode {
     Exec,
     /// 计划确认模式。
     Plan,
-    /// 自动推进执行模式。
-    Autopilot,
+    /// Goal 自主迭代循环模式。
+    Goal,
     /// UltraWork 模式。
     UltraWork,
 }
@@ -32,18 +32,25 @@ const PLAN_PROMPT: &str = r#"[PLAN MODE - 结构化计划]
 - Estimated difficulty / 预估难度
 
 计划输出后必须等待用户确认计划；在计划确认前不要修改代码、不要执行会改变仓库状态的操作。
-计划确认后询问执行策略：“一步到位” -> Autopilot，“Exec 模式” -> Exec。"#;
+计划确认后询问执行策略：”一步到位” -> Goal，”Exec 模式” -> Exec。"#;
 
-const AUTOPILOT_PROMPT: &str = r#"[EXECUTION RULES - 适用于 Autopilot 模式]
-永远不要在任务中途为了用户确认而停止；除非遇到真实阻塞或安全边界，否则持续推进。
-每 5 步静默执行一次指令回锚，确认当前行动仍然服务于用户原始任务。
+const GOAL_PROMPT: &str = r#"[GOAL MODE - 自主迭代循环]
+永远不要在任务中途为了用户确认而停止；除非遇到安全边界或真实阻塞，否则持续推进。
+每 5 步静默执行一次指令回锚，确认当前行动仍然服务于用户原始目标。
 遇到障碍时，停止前先尝试 3 种替代方案。
-步数不是硬限制；任务完成才是停止条件。
+步数不是硬限制；目标完成才是停止条件。
+
+每步决策时回顾 MissionContract：
+- 目标是否仍然一致？
+- 是否触碰了 forbidden detours？
+- 如有偏离，立即纠正。
+
+完成时输出 <promise>GOAL_COMPLETE</promise> 标签。
 
 自检模板：
-- original instruction / 原始指令：当前任务要求是什么？
-- current action / 当前动作：我正在做的动作如何推进任务？
-- drift correction / 偏移纠正：如果偏离，立即回到原始任务。"#;
+- original instruction / 原始指令：当前目标要求是什么？
+- current action / 当前动作：我正在做的动作如何推进目标？
+- drift correction / 偏移纠正：如果偏离，立即回到原始目标。"#;
 
 const ULTRAWORK_PROMPT: &str = r#"[ULTRAWORK MODE]
 保持当前 UltraWork 行为不变。"#;
@@ -53,7 +60,7 @@ pub fn build_system_prompt(mode: ExecutionMode) -> String {
     let mode_prompt = match mode {
         ExecutionMode::Exec => EXEC_PROMPT,
         ExecutionMode::Plan => PLAN_PROMPT,
-        ExecutionMode::Autopilot => AUTOPILOT_PROMPT,
+        ExecutionMode::Goal => GOAL_PROMPT,
         ExecutionMode::UltraWork => ULTRAWORK_PROMPT,
     };
 
@@ -83,12 +90,14 @@ mod tests {
     }
 
     #[test]
-    fn 测试_autopilot_prompt_包含自动执行规则() {
-        let prompt = build_system_prompt(ExecutionMode::Autopilot);
+    fn 测试_goal_prompt_包含自主执行规则() {
+        let prompt = build_system_prompt(ExecutionMode::Goal);
 
         assert!(prompt.contains("[MISSION LOCK]"));
         assert!(prompt.contains("指令回锚"));
         assert!(prompt.contains("步数不是硬限制"));
+        assert!(prompt.contains("MissionContract"));
+        assert!(prompt.contains("<promise>GOAL_COMPLETE</promise>"));
     }
 
     #[test]
