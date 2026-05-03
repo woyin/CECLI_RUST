@@ -4,8 +4,8 @@
 
 /// Atlas 执行编排
 pub mod atlas;
-/// Autopilot 长任务全自动模式（Plan → Execute → Verify → Replan 循环）
-pub mod autopilot;
+/// Goal 自主迭代循环（Planning → Executing → Verifying → Replan/Done）
+pub mod goal;
 /// Boulder 会话连续性系统
 pub mod boulder;
 /// Prometheus 规划工作流
