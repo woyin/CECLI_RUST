@@ -123,6 +123,39 @@ pub struct GoalPlan {
 }
 
 // ============================================================
+// 验证结果类型
+// ============================================================
+
+/// 单条命令的执行结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommandResult {
+    pub command: String,
+    pub exit_code: i32,
+    pub stdout: String,
+    pub stderr: String,
+    pub passed: bool,
+}
+
+/// 单条验收标准的验证结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CriteriaResult {
+    pub criterion: String,
+    pub satisfied: bool,
+    pub evidence: String,
+}
+
+/// 一次验证周期的完整报告
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationReport {
+    pub cycle: u32,
+    pub command_results: Vec<CommandResult>,
+    pub criteria_results: Vec<CriteriaResult>,
+    pub passed: bool,
+    pub failure_summary: Option<String>,
+    pub suggestions: Vec<String>,
+}
+
+// ============================================================
 // 测试
 // ============================================================
 
@@ -190,5 +223,55 @@ mod type_tests {
             deserialized.forbidden_detours
         );
         assert_eq!(plan.context, deserialized.context);
+    }
+
+    #[test]
+    fn 验证报告可序列化() {
+        let report = VerificationReport {
+            cycle: 2,
+            command_results: vec![CommandResult {
+                command: "cargo test".into(),
+                exit_code: 0,
+                stdout: "all passed".into(),
+                stderr: String::new(),
+                passed: true,
+            }],
+            criteria_results: vec![CriteriaResult {
+                criterion: "编译通过".into(),
+                satisfied: true,
+                evidence: "cargo build 成功".into(),
+            }],
+            passed: true,
+            failure_summary: None,
+            suggestions: vec![],
+        };
+
+        let json = serde_json::to_string(&report).unwrap();
+        let roundtrip: VerificationReport = serde_json::from_str(&json).unwrap();
+        assert!(roundtrip.passed);
+        assert_eq!(roundtrip.command_results.len(), 1);
+        assert_eq!(roundtrip.criteria_results.len(), 1);
+    }
+
+    #[test]
+    fn 验证失败报告包含摘要() {
+        let report = VerificationReport {
+            cycle: 1,
+            command_results: vec![CommandResult {
+                command: "cargo test".into(),
+                exit_code: 1,
+                stdout: String::new(),
+                stderr: "2 tests failed".into(),
+                passed: false,
+            }],
+            criteria_results: vec![],
+            passed: false,
+            failure_summary: Some("2 tests failed".into()),
+            suggestions: vec!["修复 test_a".into()],
+        };
+
+        assert!(!report.passed);
+        assert!(report.failure_summary.is_some());
+        assert_eq!(report.suggestions.len(), 1);
     }
 }
