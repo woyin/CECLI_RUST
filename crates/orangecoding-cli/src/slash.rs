@@ -96,6 +96,11 @@ impl SlashCommandRegistry {
             ("start-work", "开始工作：创建新的工作会话，初始化 Boulder"),
             ("stop-continuation", "停止继续：终止当前的自动循环"),
             ("handoff", "任务交接：将当前任务交给另一个 Agent"),
+            (
+                "goal",
+                "Goal 自主迭代循环：规划 → 执行 → 验证 → 动态调整",
+            ),
+            ("goal-stop", "停止当前 Goal 循环"),
         ];
 
         for (name, desc) in builtins {
