@@ -20,6 +20,7 @@
 //!                      Done
 //! ```
 
+use crate::harness::{HarnessAction, MissionContract};
 use serde::{Deserialize, Serialize};
 
 // ============================================================
@@ -156,11 +157,234 @@ pub struct VerificationReport {
 }
 
 // ============================================================
+// GoalMode 状态机
+// ============================================================
+
+/// Goal 自主迭代状态机
+///
+/// 控制 Planning → Executing → Verifying → Done 的循环流程，
+/// 支持验证失败后自动重计划和漂移检测。
+#[derive(Debug, Clone)]
+pub struct GoalMode {
+    is_active: bool,
+    phase: GoalPhase,
+    config: GoalConfig,
+    current_cycle: u32,
+    plan: Option<GoalPlan>,
+    requirement: String,
+    mission_contract: Option<MissionContract>,
+    last_verification: Option<VerificationReport>,
+}
+
+impl GoalMode {
+    /// 创建新的 GoalMode，使用默认配置，初始状态为未激活、Planning 阶段。
+    pub fn new(requirement: String) -> Self {
+        Self {
+            is_active: false,
+            phase: GoalPhase::Planning,
+            config: GoalConfig::default(),
+            current_cycle: 0,
+            plan: None,
+            requirement,
+            mission_contract: None,
+            last_verification: None,
+        }
+    }
+
+    /// 使用自定义配置创建 GoalMode。
+    pub fn with_config(requirement: String, config: GoalConfig) -> Self {
+        Self {
+            is_active: false,
+            phase: GoalPhase::Planning,
+            config,
+            current_cycle: 0,
+            plan: None,
+            requirement,
+            mission_contract: None,
+            last_verification: None,
+        }
+    }
+
+    /// 激活状态机，进入 Planning 阶段。
+    pub fn activate(&mut self) {
+        self.is_active = true;
+        self.phase = GoalPhase::Planning;
+        self.current_cycle = 0;
+    }
+
+    /// 停用状态机。
+    pub fn deactivate(&mut self) {
+        self.is_active = false;
+    }
+
+    /// 推进到下一阶段。
+    ///
+    /// 返回 `true` 表示成功推进，`false` 表示无法推进（已完成或未激活）。
+    ///
+    /// 阶段转换逻辑：
+    /// - Planning → Executing
+    /// - Executing → Verifying
+    /// - Verifying: 通过 → Done；失败 → 延长预算并重计划
+    /// - Done → 不推进
+    pub fn advance(&mut self) -> bool {
+        if !self.is_active {
+            return false;
+        }
+
+        match self.phase {
+            GoalPhase::Planning => {
+                self.phase = GoalPhase::Executing;
+                true
+            }
+            GoalPhase::Executing => {
+                self.phase = GoalPhase::Verifying;
+                true
+            }
+            GoalPhase::Verifying => {
+                let passed = self
+                    .last_verification
+                    .as_ref()
+                    .map_or(false, |v| v.passed);
+
+                if passed {
+                    self.phase = GoalPhase::Done;
+                    self.is_active = false;
+                    true
+                } else {
+                    self.current_cycle += 1;
+                    if self.current_cycle > self.config.max_cycles {
+                        self.extend_cycle_budget();
+                    }
+                    self.phase = GoalPhase::Planning;
+                    true
+                }
+            }
+            GoalPhase::Done => false,
+        }
+    }
+
+    /// 处理漂移检测的动作。
+    ///
+    /// 返回 `true` 表示采取了行动，`false` 表示无操作。
+    pub fn handle_drift(&mut self, action: HarnessAction) -> bool {
+        if !self.config.enable_drift_detection {
+            return false;
+        }
+
+        match action {
+            HarnessAction::Continue => false,
+            HarnessAction::Replan { .. } => {
+                self.phase = GoalPhase::Planning;
+                self.current_cycle += 1;
+                true
+            }
+            HarnessAction::Escalate { .. } => {
+                self.deactivate();
+                true
+            }
+        }
+    }
+
+    /// 延长循环预算，增加 `(max_cycles + 1) / 2`，最少 1。
+    fn extend_cycle_budget(&mut self) {
+        let extension = (self.config.max_cycles + 1) / 2;
+        let extension = extension.max(1);
+        self.config.max_cycles += extension;
+    }
+
+    // ----------------------------------------------------------
+    // Getters
+    // ----------------------------------------------------------
+
+    pub fn is_active(&self) -> bool {
+        self.is_active
+    }
+
+    pub fn current_phase(&self) -> GoalPhase {
+        self.phase
+    }
+
+    pub fn current_cycle(&self) -> u32 {
+        self.current_cycle
+    }
+
+    pub fn config(&self) -> &GoalConfig {
+        &self.config
+    }
+
+    pub fn requirement(&self) -> &str {
+        &self.requirement
+    }
+
+    pub fn plan(&self) -> Option<&GoalPlan> {
+        self.plan.as_ref()
+    }
+
+    pub fn last_verification(&self) -> Option<&VerificationReport> {
+        self.last_verification.as_ref()
+    }
+
+    pub fn mission_contract(&self) -> Option<&MissionContract> {
+        self.mission_contract.as_ref()
+    }
+
+    // ----------------------------------------------------------
+    // Setters
+    // ----------------------------------------------------------
+
+    pub fn set_plan(&mut self, plan: GoalPlan) {
+        self.plan = Some(plan);
+    }
+
+    pub fn set_verification(&mut self, report: VerificationReport) {
+        self.last_verification = Some(report);
+    }
+
+    pub fn set_mission_contract(&mut self, contract: MissionContract) {
+        self.mission_contract = Some(contract);
+    }
+
+    // ----------------------------------------------------------
+    // Utility
+    // ----------------------------------------------------------
+
+    /// 返回状态摘要字符串。
+    ///
+    /// 格式：`"Goal [phase] Cycle cycle/max_cycles — Tasks: done/total"`
+    /// 或 `"Goal [phase] Cycle cycle/max_cycles — No plan yet"`
+    pub fn status_summary(&self) -> String {
+        let phase_name = self.phase.display_name();
+        if let Some(ref plan) = self.plan {
+            let done = plan
+                .tasks
+                .iter()
+                .filter(|t| t.status == GoalTaskStatus::Completed)
+                .count();
+            let total = plan.tasks.len();
+            format!(
+                "Goal [{}] Cycle {}/{} — Tasks: {}/{}",
+                phase_name, self.current_cycle, self.config.max_cycles, done, total
+            )
+        } else {
+            format!(
+                "Goal [{}] Cycle {}/{} — No plan yet",
+                phase_name, self.current_cycle, self.config.max_cycles
+            )
+        }
+    }
+
+    /// 检查是否已完成（阶段为 Done）。
+    pub fn is_complete(&self) -> bool {
+        self.phase == GoalPhase::Done
+    }
+}
+
+// ============================================================
 // 测试
 // ============================================================
 
 #[cfg(test)]
-mod type_tests {
+mod tests {
     use super::*;
 
     #[test]
@@ -273,5 +497,253 @@ mod type_tests {
         assert!(!report.passed);
         assert!(report.failure_summary.is_some());
         assert_eq!(report.suggestions.len(), 1);
+    }
+
+    // ===========================================================
+    // GoalMode 状态机测试
+    // ===========================================================
+
+    #[test]
+    fn 新建模式默认未激活() {
+        let mode = GoalMode::new("实现功能".to_string());
+        assert!(!mode.is_active());
+        assert_eq!(mode.current_phase(), GoalPhase::Planning);
+        assert_eq!(mode.current_cycle(), 0);
+        assert!(mode.plan().is_none());
+        assert!(mode.last_verification().is_none());
+        assert!(mode.mission_contract().is_none());
+        assert_eq!(mode.requirement(), "实现功能");
+    }
+
+    #[test]
+    fn 激活后可推进() {
+        let mut mode = GoalMode::new("测试目标".to_string());
+        mode.activate();
+        assert!(mode.is_active());
+        assert_eq!(mode.current_phase(), GoalPhase::Planning);
+
+        assert!(mode.advance());
+        assert_eq!(mode.current_phase(), GoalPhase::Executing);
+    }
+
+    #[test]
+    fn 未激活时无法推进() {
+        let mut mode = GoalMode::new("测试目标".to_string());
+        assert!(!mode.is_active());
+        assert!(!mode.advance());
+    }
+
+    #[test]
+    fn 完整循环_验证通过() {
+        let mut mode = GoalMode::new("完整测试".to_string());
+        mode.activate();
+
+        // Planning → Executing
+        assert!(mode.advance());
+        assert_eq!(mode.current_phase(), GoalPhase::Executing);
+
+        // Executing → Verifying
+        assert!(mode.advance());
+        assert_eq!(mode.current_phase(), GoalPhase::Verifying);
+
+        // 设置验证通过
+        mode.set_verification(VerificationReport {
+            cycle: 0,
+            command_results: vec![],
+            criteria_results: vec![],
+            passed: true,
+            failure_summary: None,
+            suggestions: vec![],
+        });
+
+        // Verifying → Done
+        assert!(mode.advance());
+        assert_eq!(mode.current_phase(), GoalPhase::Done);
+        assert!(!mode.is_active());
+        assert!(mode.is_complete());
+    }
+
+    #[test]
+    fn 验证失败触发重计划() {
+        let mut mode = GoalMode::new("失败测试".to_string());
+        mode.activate();
+
+        // Planning → Executing → Verifying
+        mode.advance();
+        mode.advance();
+        assert_eq!(mode.current_phase(), GoalPhase::Verifying);
+
+        // 设置验证失败
+        mode.set_verification(VerificationReport {
+            cycle: 0,
+            command_results: vec![],
+            criteria_results: vec![],
+            passed: false,
+            failure_summary: Some("测试失败".into()),
+            suggestions: vec![],
+        });
+
+        // Verifying → Planning (replan)
+        assert!(mode.advance());
+        assert_eq!(mode.current_phase(), GoalPhase::Planning);
+        assert_eq!(mode.current_cycle(), 1);
+    }
+
+    #[test]
+    fn 超过初始循环预算会扩展并继续() {
+        let config = GoalConfig {
+            max_cycles: 2,
+            ..GoalConfig::default()
+        };
+        let mut mode = GoalMode::with_config("预算测试".to_string(), config);
+        mode.activate();
+
+        let failed_report = VerificationReport {
+            cycle: 0,
+            command_results: vec![],
+            criteria_results: vec![],
+            passed: false,
+            failure_summary: Some("失败".into()),
+            suggestions: vec![],
+        };
+
+        // 第一次失败: cycle 0 → 1
+        mode.advance(); // Planning → Executing
+        mode.advance(); // Executing → Verifying
+        mode.set_verification(failed_report.clone());
+        mode.advance(); // Verifying → Planning
+        assert_eq!(mode.current_cycle(), 1);
+
+        // 第二次失败: cycle 1 → 2
+        mode.advance(); // Planning → Executing
+        mode.advance(); // Executing → Verifying
+        mode.set_verification(failed_report.clone());
+        mode.advance(); // Verifying → Planning, cycle=2 equals max_cycles
+        assert_eq!(mode.current_cycle(), 2);
+
+        // 第三次失败: cycle 2 → 3, should extend budget
+        let old_max = mode.config().max_cycles;
+        mode.advance(); // Planning → Executing
+        mode.advance(); // Executing → Verifying
+        mode.set_verification(failed_report);
+        mode.advance(); // Verifying → Planning, cycle=3 > max_cycles=2 → extend
+        assert_eq!(mode.current_cycle(), 3);
+        assert!(mode.config().max_cycles > old_max);
+    }
+
+    #[test]
+    fn drift_检测触发重计划() {
+        let mut mode = GoalMode::new("drift 测试".to_string());
+        mode.activate();
+        mode.advance(); // Planning → Executing
+
+        let result = mode.handle_drift(HarnessAction::Replan {
+            reason: "偏离目标".into(),
+        });
+        assert!(result);
+        assert_eq!(mode.current_phase(), GoalPhase::Planning);
+        assert_eq!(mode.current_cycle(), 1);
+    }
+
+    #[test]
+    fn drift_升级停止执行() {
+        let mut mode = GoalMode::new("escalate 测试".to_string());
+        mode.activate();
+
+        let result = mode.handle_drift(HarnessAction::Escalate {
+            reason: "无法恢复".into(),
+        });
+        assert!(result);
+        assert!(!mode.is_active());
+    }
+
+    #[test]
+    fn 禁用_drift_检测时不触发() {
+        let config = GoalConfig {
+            enable_drift_detection: false,
+            ..GoalConfig::default()
+        };
+        let mut mode = GoalMode::with_config("禁用 drift".to_string(), config);
+        mode.activate();
+
+        let result = mode.handle_drift(HarnessAction::Replan {
+            reason: "不应触发".into(),
+        });
+        assert!(!result);
+    }
+
+    #[test]
+    fn 状态摘要包含关键信息() {
+        let mut mode = GoalMode::new("摘要测试".to_string());
+        mode.activate();
+
+        let summary = mode.status_summary();
+        assert!(summary.contains("制定计划"));
+        assert!(summary.contains("0/20"));
+        assert!(summary.contains("No plan yet"));
+
+        // 设置一个计划
+        mode.set_plan(GoalPlan {
+            requirement: "摘要测试".to_string(),
+            tasks: vec![
+                GoalTask {
+                    id: "t1".into(),
+                    title: "任务1".into(),
+                    description: "描述".into(),
+                    target_files: vec![],
+                    acceptance_criteria: vec![],
+                    depends_on: vec![],
+                    status: GoalTaskStatus::Completed,
+                },
+                GoalTask {
+                    id: "t2".into(),
+                    title: "任务2".into(),
+                    description: "描述".into(),
+                    target_files: vec![],
+                    acceptance_criteria: vec![],
+                    depends_on: vec![],
+                    status: GoalTaskStatus::Pending,
+                },
+            ],
+            acceptance_criteria: vec![],
+            cycle: 0,
+            forbidden_detours: vec![],
+            context: String::new(),
+        });
+
+        let summary = mode.status_summary();
+        assert!(summary.contains("Tasks: 1/2"));
+    }
+
+    #[test]
+    fn 停止后不再推进() {
+        let mut mode = GoalMode::new("停止测试".to_string());
+        mode.activate();
+        mode.deactivate();
+        assert!(!mode.is_active());
+        assert!(!mode.advance());
+    }
+
+    #[test]
+    fn 完成后不再推进() {
+        let mut mode = GoalMode::new("完成测试".to_string());
+        mode.activate();
+
+        // 推进到 Done
+        mode.advance(); // Planning → Executing
+        mode.advance(); // Executing → Verifying
+        mode.set_verification(VerificationReport {
+            cycle: 0,
+            command_results: vec![],
+            criteria_results: vec![],
+            passed: true,
+            failure_summary: None,
+            suggestions: vec![],
+        });
+        mode.advance(); // Verifying → Done
+        assert_eq!(mode.current_phase(), GoalPhase::Done);
+
+        // Done 之后无法推进
+        assert!(!mode.advance());
     }
 }
