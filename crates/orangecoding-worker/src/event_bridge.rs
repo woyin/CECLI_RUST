@@ -70,14 +70,14 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
 
         AgentEvent::MessageReceived { .. } => None,
 
-        AgentEvent::AutopilotPhaseChanged { phase, cycle, .. } => Some(ServerEvent::AgentStatus {
+        AgentEvent::GoalPhaseChanged { phase, cycle, .. } => Some(ServerEvent::AgentStatus {
             session_id: sid,
-            status: format!("autopilot_phase_{}", phase),
-            message: Some(format!("Autopilot 第{}轮: {}", cycle, phase)),
+            status: format!("goal_phase_{}", phase),
+            message: Some(format!("Goal 第{}轮: {}", cycle, phase)),
             timestamp: now,
         }),
 
-        AgentEvent::AutopilotTaskCompleted {
+        AgentEvent::GoalTaskCompleted {
             task_id, success, ..
         } => Some(ServerEvent::AgentStatus {
             session_id: sid,
@@ -95,7 +95,7 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
             timestamp: now,
         }),
 
-        AgentEvent::AutopilotCycleComplete {
+        AgentEvent::GoalCycleComplete {
             cycle,
             tasks_completed,
             tasks_failed,
@@ -103,7 +103,7 @@ pub fn agent_event_to_server_event(event: &AgentEvent, session_id: &str) -> Opti
             ..
         } => Some(ServerEvent::AgentStatus {
             session_id: sid,
-            status: "autopilot_cycle_complete".to_string(),
+            status: "goal_cycle_complete".to_string(),
             message: Some(format!(
                 "第{}轮完成: {}成功/{}失败 验证{}",
                 cycle,

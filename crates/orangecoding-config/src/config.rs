@@ -151,16 +151,16 @@ impl Default for TuiConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Autopilot（长任务全自动模式）配置
+// Goal（长任务全自动模式）配置
 // ---------------------------------------------------------------------------
 
-/// Autopilot 长任务全自动模式配置
+/// Goal 长任务全自动模式配置
 ///
 /// 控制 Plan → Execute → Verify → Replan 循环的行为参数。
-/// 可通过 CLI 参数（--autopilot）或斜杠命令（/autopilot）覆盖。
+/// 可通过 CLI 参数（--goal）或斜杠命令（/goal）覆盖。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
-pub struct AutopilotConfig {
+pub struct GoalConfig {
     /// 初始循环软预算（默认 10），耗尽后自动扩展
     pub max_cycles: u32,
 
@@ -187,8 +187,8 @@ pub struct AutopilotConfig {
     pub auto_commit_per_cycle: bool,
 }
 
-/// 为 `AutopilotConfig` 提供合理的默认值
-impl Default for AutopilotConfig {
+/// 为 `GoalConfig` 提供合理的默认值
+impl Default for GoalConfig {
     fn default() -> Self {
         Self {
             max_cycles: 10,
@@ -260,9 +260,9 @@ pub struct OrangeConfig {
     #[serde(default)]
     pub logging: LoggingConfig,
 
-    /// Autopilot 长任务全自动模式配置
+    /// Goal 长任务全自动模式配置
     #[serde(default)]
-    pub autopilot: AutopilotConfig,
+    pub goal: GoalConfig,
 }
 
 /// 为 `OrangeConfig` 提供默认值，各子配置均使用自己的默认值
@@ -274,7 +274,7 @@ impl Default for OrangeConfig {
             tools: ToolsConfig::default(),
             tui: TuiConfig::default(),
             logging: LoggingConfig::default(),
-            autopilot: AutopilotConfig::default(),
+            goal: GoalConfig::default(),
         }
     }
 }
@@ -548,15 +548,15 @@ mod tests {
         assert!(config.logging.file.is_none());
         assert!(!config.logging.json_format);
 
-        // 验证 Autopilot 配置默认值
-        assert_eq!(config.autopilot.max_cycles, 10);
-        assert!(!config.autopilot.verify_strict);
-        assert_eq!(config.autopilot.task_max_iterations, 30);
-        assert_eq!(config.autopilot.task_timeout_secs, 600);
-        assert!(!config.autopilot.pause_between_cycles);
-        assert!(config.autopilot.auto_run_tests);
-        assert!(config.autopilot.verify_commands.is_empty());
-        assert!(!config.autopilot.auto_commit_per_cycle);
+        // 验证 Goal 配置默认值
+        assert_eq!(config.goal.max_cycles, 10);
+        assert!(!config.goal.verify_strict);
+        assert_eq!(config.goal.task_max_iterations, 30);
+        assert_eq!(config.goal.task_timeout_secs, 600);
+        assert!(!config.goal.pause_between_cycles);
+        assert!(config.goal.auto_run_tests);
+        assert!(config.goal.verify_commands.is_empty());
+        assert!(!config.goal.auto_commit_per_cycle);
     }
 
     /// 测试 TOML 序列化与反序列化的往返一致性

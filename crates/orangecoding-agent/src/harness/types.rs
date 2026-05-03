@@ -100,8 +100,8 @@ mod tests {
     #[test]
     fn 步骤结果保留对齐证据() {
         let outcome = StepOutcome {
-            summary: "更新了 autopilot 状态机".into(),
-            touched_files: vec!["crates/orangecoding-agent/src/workflows/autopilot.rs".into()],
+            summary: "更新了 goal 状态机".into(),
+            touched_files: vec!["crates/orangecoding-agent/src/workflows/goal.rs".into()],
             decisions: vec!["引入有界执行段".into()],
             rationale: "为了在每段结束后执行检查点".into(),
             blockers: vec![],

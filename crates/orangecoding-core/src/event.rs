@@ -140,10 +140,10 @@ pub enum AgentEvent {
         timestamp: DateTime<Utc>,
     },
 
-    /// Autopilot 阶段切换
+    /// Goal 阶段切换
     ///
-    /// 当 Autopilot 模式的执行阶段发生变化时触发。
-    AutopilotPhaseChanged {
+    /// 当 Goal 模式的执行阶段发生变化时触发。
+    GoalPhaseChanged {
         agent_id: AgentId,
         session_id: SessionId,
         /// 阶段名称（analyzing/planning/executing/verifying/done/failed）
@@ -153,10 +153,10 @@ pub enum AgentEvent {
         timestamp: DateTime<Utc>,
     },
 
-    /// Autopilot 单个任务完成
+    /// Goal 单个任务完成
     ///
-    /// 当 Autopilot 模式中某个子任务执行完毕时触发。
-    AutopilotTaskCompleted {
+    /// 当 Goal 模式中某个子任务执行完毕时触发。
+    GoalTaskCompleted {
         agent_id: AgentId,
         session_id: SessionId,
         /// 任务 ID
@@ -168,10 +168,10 @@ pub enum AgentEvent {
         timestamp: DateTime<Utc>,
     },
 
-    /// Autopilot 一轮循环完成
+    /// Goal 一轮循环完成
     ///
-    /// 当 Autopilot 模式完成一轮 Plan→Execute→Verify 循环时触发。
-    AutopilotCycleComplete {
+    /// 当 Goal 模式完成一轮 Plan→Execute→Verify 循环时触发。
+    GoalCycleComplete {
         agent_id: AgentId,
         session_id: SessionId,
         /// 完成的循环轮次
@@ -198,9 +198,9 @@ impl AgentEvent {
             | AgentEvent::StreamChunk { timestamp, .. }
             | AgentEvent::Completed { timestamp, .. }
             | AgentEvent::Error { timestamp, .. }
-            | AgentEvent::AutopilotPhaseChanged { timestamp, .. }
-            | AgentEvent::AutopilotTaskCompleted { timestamp, .. }
-            | AgentEvent::AutopilotCycleComplete { timestamp, .. } => timestamp,
+            | AgentEvent::GoalPhaseChanged { timestamp, .. }
+            | AgentEvent::GoalTaskCompleted { timestamp, .. }
+            | AgentEvent::GoalCycleComplete { timestamp, .. } => timestamp,
         }
     }
 
@@ -215,9 +215,9 @@ impl AgentEvent {
             | AgentEvent::StreamChunk { agent_id, .. }
             | AgentEvent::Completed { agent_id, .. }
             | AgentEvent::Error { agent_id, .. }
-            | AgentEvent::AutopilotPhaseChanged { agent_id, .. }
-            | AgentEvent::AutopilotTaskCompleted { agent_id, .. }
-            | AgentEvent::AutopilotCycleComplete { agent_id, .. } => agent_id,
+            | AgentEvent::GoalPhaseChanged { agent_id, .. }
+            | AgentEvent::GoalTaskCompleted { agent_id, .. }
+            | AgentEvent::GoalCycleComplete { agent_id, .. } => agent_id,
         }
     }
 
@@ -232,9 +232,9 @@ impl AgentEvent {
             | AgentEvent::StreamChunk { session_id, .. }
             | AgentEvent::Completed { session_id, .. }
             | AgentEvent::Error { session_id, .. }
-            | AgentEvent::AutopilotPhaseChanged { session_id, .. }
-            | AgentEvent::AutopilotTaskCompleted { session_id, .. }
-            | AgentEvent::AutopilotCycleComplete { session_id, .. } => session_id,
+            | AgentEvent::GoalPhaseChanged { session_id, .. }
+            | AgentEvent::GoalTaskCompleted { session_id, .. }
+            | AgentEvent::GoalCycleComplete { session_id, .. } => session_id,
         }
     }
 
@@ -249,9 +249,9 @@ impl AgentEvent {
             AgentEvent::StreamChunk { .. } => "stream_chunk",
             AgentEvent::Completed { .. } => "completed",
             AgentEvent::Error { .. } => "error",
-            AgentEvent::AutopilotPhaseChanged { .. } => "autopilot_phase_changed",
-            AgentEvent::AutopilotTaskCompleted { .. } => "autopilot_task_completed",
-            AgentEvent::AutopilotCycleComplete { .. } => "autopilot_cycle_complete",
+            AgentEvent::GoalPhaseChanged { .. } => "goal_phase_changed",
+            AgentEvent::GoalTaskCompleted { .. } => "goal_task_completed",
+            AgentEvent::GoalCycleComplete { .. } => "goal_cycle_complete",
         }
     }
 }
@@ -341,7 +341,7 @@ impl fmt::Display for AgentEvent {
             } => {
                 write!(f, "[{timestamp}] 代理 {agent_id} 错误: {error_message}")
             }
-            AgentEvent::AutopilotPhaseChanged {
+            AgentEvent::GoalPhaseChanged {
                 agent_id,
                 phase,
                 cycle,
@@ -350,10 +350,10 @@ impl fmt::Display for AgentEvent {
             } => {
                 write!(
                     f,
-                    "[{timestamp}] 代理 {agent_id} Autopilot 阶段切换: {phase} (第{cycle}轮)"
+                    "[{timestamp}] 代理 {agent_id} Goal 阶段切换: {phase} (第{cycle}轮)"
                 )
             }
-            AgentEvent::AutopilotTaskCompleted {
+            AgentEvent::GoalTaskCompleted {
                 agent_id,
                 task_id,
                 success,
@@ -363,10 +363,10 @@ impl fmt::Display for AgentEvent {
                 let status = if *success { "成功" } else { "失败" };
                 write!(
                     f,
-                    "[{timestamp}] 代理 {agent_id} Autopilot 任务{status}: {task_id}"
+                    "[{timestamp}] 代理 {agent_id} Goal 任务{status}: {task_id}"
                 )
             }
-            AgentEvent::AutopilotCycleComplete {
+            AgentEvent::GoalCycleComplete {
                 agent_id,
                 cycle,
                 tasks_completed,
@@ -382,7 +382,7 @@ impl fmt::Display for AgentEvent {
                 };
                 write!(
                     f,
-                    "[{timestamp}] 代理 {agent_id} Autopilot 第{cycle}轮完成: {tasks_completed}成功/{tasks_failed}失败 验证{verify}"
+                    "[{timestamp}] 代理 {agent_id} Goal 第{cycle}轮完成: {tasks_completed}成功/{tasks_failed}失败 验证{verify}"
                 )
             }
         }
@@ -551,13 +551,13 @@ impl AgentEvent {
         }
     }
 
-    pub fn autopilot_phase_changed(
+    pub fn goal_phase_changed(
         agent_id: AgentId,
         session_id: SessionId,
         phase: impl Into<String>,
         cycle: u32,
     ) -> Self {
-        AgentEvent::AutopilotPhaseChanged {
+        AgentEvent::GoalPhaseChanged {
             agent_id,
             session_id,
             phase: phase.into(),
@@ -566,14 +566,14 @@ impl AgentEvent {
         }
     }
 
-    pub fn autopilot_task_completed(
+    pub fn goal_task_completed(
         agent_id: AgentId,
         session_id: SessionId,
         task_id: impl Into<String>,
         task_description: impl Into<String>,
         success: bool,
     ) -> Self {
-        AgentEvent::AutopilotTaskCompleted {
+        AgentEvent::GoalTaskCompleted {
             agent_id,
             session_id,
             task_id: task_id.into(),
@@ -583,7 +583,7 @@ impl AgentEvent {
         }
     }
 
-    pub fn autopilot_cycle_complete(
+    pub fn goal_cycle_complete(
         agent_id: AgentId,
         session_id: SessionId,
         cycle: u32,
@@ -591,7 +591,7 @@ impl AgentEvent {
         tasks_failed: u32,
         verification_passed: bool,
     ) -> Self {
-        AgentEvent::AutopilotCycleComplete {
+        AgentEvent::GoalCycleComplete {
             agent_id,
             session_id,
             cycle,
@@ -795,18 +795,18 @@ mod tests {
             "stream_chunk"
         );
         assert_eq!(
-            AgentEvent::autopilot_phase_changed(aid.clone(), sid.clone(), "planning", 1)
+            AgentEvent::goal_phase_changed(aid.clone(), sid.clone(), "planning", 1)
                 .event_kind(),
-            "autopilot_phase_changed"
+            "goal_phase_changed"
         );
         assert_eq!(
-            AgentEvent::autopilot_task_completed(aid.clone(), sid.clone(), "t1", "desc", true)
+            AgentEvent::goal_task_completed(aid.clone(), sid.clone(), "t1", "desc", true)
                 .event_kind(),
-            "autopilot_task_completed"
+            "goal_task_completed"
         );
         assert_eq!(
-            AgentEvent::autopilot_cycle_complete(aid, sid, 1, 3, 0, true).event_kind(),
-            "autopilot_cycle_complete"
+            AgentEvent::goal_cycle_complete(aid, sid, 1, 3, 0, true).event_kind(),
+            "goal_cycle_complete"
         );
     }
 }
