@@ -148,7 +148,7 @@ impl SidebarView {
         let mode_color = match interaction_mode {
             InteractionMode::Normal => Color::Green,
             InteractionMode::Plan => Color::Yellow,
-            InteractionMode::Autopilot => Color::Cyan,
+            InteractionMode::Goal => Color::Cyan,
             InteractionMode::UltraWork => Color::Magenta,
         };
 

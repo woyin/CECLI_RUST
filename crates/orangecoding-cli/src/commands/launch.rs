@@ -33,7 +33,7 @@ use orangecoding_tui::App;
 /// - 直接提供 prompt 进行单次任务
 /// - 选择 AI 模型和提供商
 /// - 启用交互模式或禁用 TUI
-/// - 启用 Autopilot 长任务全自动模式
+/// - 启用 Goal 自主迭代循环模式
 #[derive(Args, Debug, Default)]
 pub struct LaunchArgs {
     /// 要执行的任务描述（可选，不提供时进入交互模式）
@@ -56,32 +56,33 @@ pub struct LaunchArgs {
     #[arg(long, default_value_t = false)]
     pub no_tui: bool,
 
-    /// 启用 Autopilot 长任务全自动模式
-    ///
-    /// 系统将自动执行 Plan → Execute → Verify → Replan 循环，
-    /// 直到所有任务完成或达到最大循环轮次。
+    /// 启用 Goal 自主迭代循环模式
     #[arg(long)]
-    pub autopilot: bool,
+    pub goal: bool,
 
-    /// Autopilot 模式的需求文件路径（替代 --autopilot 后直接跟 prompt）
+    /// Goal 模式的需求文件路径
     #[arg(long)]
-    pub autopilot_file: Option<String>,
+    pub goal_file: Option<String>,
 
-    /// Autopilot 最大循环轮次（覆盖配置文件设置）
+    /// Goal 最大循环轮次（默认 20）
     #[arg(long)]
     pub max_cycles: Option<u32>,
 
-    /// Autopilot 严格验证模式：所有验收标准必须通过
-    #[arg(long, default_value_t = false)]
-    pub verify_strict: bool,
+    /// Goal 完成信号短语（默认 GOAL_COMPLETE）
+    #[arg(long)]
+    pub promise: Option<String>,
 
-    /// Autopilot 每轮结束后暂停等待用户确认
-    #[arg(long, default_value_t = false)]
-    pub pause_between_cycles: bool,
+    /// Goal 验证命令（默认 cargo test）
+    #[arg(long)]
+    pub verify: Option<String>,
 
-    /// Autopilot 禁用自动测试运行
+    /// 禁用 drift 检测
     #[arg(long, default_value_t = false)]
-    pub no_auto_test: bool,
+    pub no_drift_detect: bool,
+
+    /// 禁用每轮自动 git commit
+    #[arg(long, default_value_t = false)]
+    pub no_auto_commit: bool,
 }
 
 // ============================================================
@@ -124,7 +125,7 @@ pub async fn execute(args: LaunchArgs, config: OrangeConfig) -> Result<()> {
             prompt,
             model_name,
             explicit_model,
-            args.autopilot || args.autopilot_file.is_some(),
+            args.goal || args.goal_file.is_some(),
             &config,
         )
         .await
@@ -396,7 +397,7 @@ fn mode_to_execution_mode(mode: orangecoding_tui::app::InteractionMode) -> Execu
     match mode {
         orangecoding_tui::app::InteractionMode::Normal => ExecutionMode::Exec,
         orangecoding_tui::app::InteractionMode::Plan => ExecutionMode::Plan,
-        orangecoding_tui::app::InteractionMode::Autopilot => ExecutionMode::Autopilot,
+        orangecoding_tui::app::InteractionMode::Goal => ExecutionMode::Goal,
         orangecoding_tui::app::InteractionMode::UltraWork => ExecutionMode::UltraWork,
     }
 }
@@ -419,7 +420,7 @@ fn is_mode_system_prompt(message: &ChatMessage) -> bool {
     [
         ExecutionMode::Exec,
         ExecutionMode::Plan,
-        ExecutionMode::Autopilot,
+        ExecutionMode::Goal,
         ExecutionMode::UltraWork,
     ]
     .into_iter()
@@ -543,15 +544,15 @@ async fn run_single_shot(
     prompt: &str,
     model: &str,
     explicit_model: bool,
-    autopilot: bool,
+    goal: bool,
     config: &OrangeConfig,
 ) -> Result<()> {
     println!("🚀 正在执行任务: {}", prompt);
     println!();
 
     let runtime_config = load_runtime_config();
-    let execution_mode = if autopilot {
-        ExecutionMode::Autopilot
+    let execution_mode = if goal {
+        ExecutionMode::Goal
     } else {
         ExecutionMode::Exec
     };
@@ -985,7 +986,7 @@ fn handle_slash_command(app: &mut App, options: &mut ChatOptions, name: &str, ar
                 app.add_message(
                     Role::System,
                     format!(
-                        "未知模式: {}。可选: normal, plan, autopilot, ultrawork",
+                        "未知模式: {}。可选: normal, plan, goal, ultrawork",
                         args
                     ),
                 );
@@ -1021,7 +1022,7 @@ fn handle_slash_command(app: &mut App, options: &mut ChatOptions, name: &str, ar
                 Role::System,
                 "可用命令:\n\
                  /model <名称>    - 切换 AI 模型\n\
-                 /mode <模式>     - 切换模式：normal=Exec，plan=先规划，autopilot=长任务\n\
+                 /mode <模式>     - 切换模式：normal=Exec，plan=先规划，goal=自主迭代\n\
                  /plan           - 切换 Plan 模式；规划后选择 一步到位 或 Exec\n\
                  /think <深度>    - 切换思考深度 (off/light/medium/deep/maximum)\n\
                  /clear           - 清除对话\n\
@@ -1262,13 +1263,13 @@ mod tests {
             ChatMessage::system(build_system_prompt(ExecutionMode::Plan)),
         ];
 
-        ensure_system_prompt(&mut messages, ExecutionMode::Autopilot);
+        ensure_system_prompt(&mut messages, ExecutionMode::Goal);
 
         assert_eq!(messages.len(), 3);
         assert_eq!(messages[0].role, MessageRole::System);
         assert_eq!(
             messages[0].content.as_deref(),
-            Some(build_system_prompt(ExecutionMode::Autopilot).as_str())
+            Some(build_system_prompt(ExecutionMode::Goal).as_str())
         );
         assert_eq!(messages[1].content.as_deref(), Some("保留用户消息"));
         assert_eq!(messages[2].content.as_deref(), Some("保留助手消息"));
@@ -1406,8 +1407,8 @@ mod tests {
             ExecutionMode::Plan
         );
         assert_eq!(
-            mode_to_execution_mode(InteractionMode::Autopilot),
-            ExecutionMode::Autopilot
+            mode_to_execution_mode(InteractionMode::Goal),
+            ExecutionMode::Goal
         );
         assert_eq!(
             mode_to_execution_mode(InteractionMode::UltraWork),

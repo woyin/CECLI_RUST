@@ -1,7 +1,7 @@
 //! 应用状态管理模块
 //!
 //! 本模块定义了 TUI 应用的核心状态结构，包括消息列表、输入状态、
-//! 应用模式、交互模式（Plan / Autopilot / UltraWork）、思考深度控制
+//! 应用模式、交互模式（Plan / Goal / UltraWork）、思考深度控制
 //! 以及键盘事件处理逻辑。
 
 use chrono::{DateTime, Utc};
@@ -62,8 +62,8 @@ pub enum InteractionMode {
     Normal,
     /// Plan 模式 - 先规划，确认后选择执行策略
     Plan,
-    /// 长任务模式 - 全程自动执行并静默自纠
-    Autopilot,
+    /// Goal 模式 - 自主迭代循环，自动规划、执行、验证
+    Goal,
     /// 极限模式 - 暂保持现状
     UltraWork,
 }
@@ -74,7 +74,7 @@ impl InteractionMode {
         &[
             InteractionMode::Normal,
             InteractionMode::Plan,
-            InteractionMode::Autopilot,
+            InteractionMode::Goal,
             InteractionMode::UltraWork,
         ]
     }
@@ -83,8 +83,8 @@ impl InteractionMode {
     pub fn next(&self) -> InteractionMode {
         match self {
             InteractionMode::Normal => InteractionMode::Plan,
-            InteractionMode::Plan => InteractionMode::Autopilot,
-            InteractionMode::Autopilot => InteractionMode::UltraWork,
+            InteractionMode::Plan => InteractionMode::Goal,
+            InteractionMode::Goal => InteractionMode::UltraWork,
             InteractionMode::UltraWork => InteractionMode::Normal,
         }
     }
@@ -94,7 +94,7 @@ impl InteractionMode {
         match self {
             InteractionMode::Normal => "Normal",
             InteractionMode::Plan => "Plan",
-            InteractionMode::Autopilot => "Autopilot",
+            InteractionMode::Goal => "Goal",
             InteractionMode::UltraWork => "UltraWork",
         }
     }
@@ -104,7 +104,7 @@ impl InteractionMode {
         match self {
             InteractionMode::Normal => "Exec 模式 - 严格执行，决策分叉才询问",
             InteractionMode::Plan => "Plan 模式 - 先规划，确认后选择执行策略",
-            InteractionMode::Autopilot => "长任务模式 - 全程自动执行并静默自纠",
+            InteractionMode::Goal => "Goal 模式 - 自主迭代循环，自动规划、执行、验证",
             InteractionMode::UltraWork => "极限模式 - 暂保持现状",
         }
     }
@@ -114,7 +114,7 @@ impl InteractionMode {
         match s.to_lowercase().as_str() {
             "normal" => Some(InteractionMode::Normal),
             "plan" => Some(InteractionMode::Plan),
-            "autopilot" | "auto" => Some(InteractionMode::Autopilot),
+            "goal" | "auto" => Some(InteractionMode::Goal),
             "ultrawork" | "ultra" => Some(InteractionMode::UltraWork),
             _ => None,
         }
@@ -691,7 +691,7 @@ impl StatusInfo {
 /// # 状态层次
 ///
 /// - `mode` (AppMode): TUI 导航状态（普通/输入/命令/帮助）
-/// - `interaction_mode` (InteractionMode): 智能体工作策略（Normal/Plan/Autopilot/UltraWork）
+/// - `interaction_mode` (InteractionMode): 智能体工作策略（Normal/Plan/Goal/UltraWork）
 /// - `thinking_depth` (ThinkingDepth): AI 推理深度（关闭/浅层/中等/深度/极限）
 ///
 /// # 使用示例
@@ -822,7 +822,7 @@ impl App {
     /// 根据当前应用模式分发键盘事件到对应的处理逻辑。
     /// 全局快捷键（在任意模式下生效）：
     /// - Ctrl+C: 退出应用
-    /// - Shift+Tab: 切换交互模式（Normal → Plan → Autopilot → UltraWork）
+    /// - Shift+Tab: 切换交互模式（Normal → Plan → Goal → UltraWork）
     /// - Ctrl+L: 切换思考深度（关闭 → 浅层 → 中等 → 深度 → 极限）
     /// - Ctrl+B: 切换侧边栏显示/隐藏
     ///
@@ -1896,9 +1896,9 @@ mod tests {
         );
         assert_eq!(app.interaction_mode, InteractionMode::Plan);
 
-        // 再次切换到 Autopilot
+        // 再次切换到 Goal
         app.handle_key_event(key_press_with_mod(KeyCode::BackTab, KeyModifiers::SHIFT));
-        assert_eq!(app.interaction_mode, InteractionMode::Autopilot);
+        assert_eq!(app.interaction_mode, InteractionMode::Goal);
 
         // 再次切换到 UltraWork
         app.handle_key_event(key_press_with_mod(KeyCode::BackTab, KeyModifiers::SHIFT));
@@ -2058,7 +2058,7 @@ mod tests {
     fn 测试交互模式属性() {
         assert_eq!(InteractionMode::Normal.label(), "Normal");
         assert_eq!(InteractionMode::Plan.label(), "Plan");
-        assert_eq!(InteractionMode::Autopilot.label(), "Autopilot");
+        assert_eq!(InteractionMode::Goal.label(), "Goal");
         assert_eq!(InteractionMode::UltraWork.label(), "UltraWork");
         assert_eq!(InteractionMode::all().len(), 4);
     }
@@ -2067,7 +2067,7 @@ mod tests {
     fn 测试交互模式描述反映新语义() {
         assert!(InteractionMode::Normal.description().contains("Exec"));
         assert!(InteractionMode::Plan.description().contains("选择执行策略"));
-        assert!(InteractionMode::Autopilot.description().contains("长任务"));
+        assert!(InteractionMode::Goal.description().contains("Goal"));
         assert!(InteractionMode::UltraWork
             .description()
             .contains("保持现状"));
@@ -2084,12 +2084,12 @@ mod tests {
             Some(InteractionMode::Plan)
         );
         assert_eq!(
-            InteractionMode::from_str_name("autopilot"),
-            Some(InteractionMode::Autopilot)
+            InteractionMode::from_str_name("goal"),
+            Some(InteractionMode::Goal)
         );
         assert_eq!(
             InteractionMode::from_str_name("auto"),
-            Some(InteractionMode::Autopilot)
+            Some(InteractionMode::Goal)
         );
         assert_eq!(
             InteractionMode::from_str_name("ultrawork"),
@@ -2240,15 +2240,15 @@ mod tests {
         app.mode = AppMode::Command;
         app.open_mode_menu();
 
-        // 选择 Autopilot (index 2)
+        // 选择 Goal (index 2)
         app.handle_key_event(key_press(KeyCode::Down));
         app.handle_key_event(key_press(KeyCode::Down));
         let action = app.handle_key_event(key_press(KeyCode::Enter));
         assert_eq!(
             action,
-            AppAction::SwitchInteractionMode(InteractionMode::Autopilot)
+            AppAction::SwitchInteractionMode(InteractionMode::Goal)
         );
-        assert_eq!(app.interaction_mode, InteractionMode::Autopilot);
+        assert_eq!(app.interaction_mode, InteractionMode::Goal);
     }
 
     #[test]

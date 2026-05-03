@@ -108,7 +108,7 @@ impl MainLayout {
         let mode_color = match app.interaction_mode {
             crate::app::InteractionMode::Normal => Color::Green,
             crate::app::InteractionMode::Plan => Color::Yellow,
-            crate::app::InteractionMode::Autopilot => Color::Cyan,
+            crate::app::InteractionMode::Goal => Color::Cyan,
             crate::app::InteractionMode::UltraWork => Color::Magenta,
         };
 
